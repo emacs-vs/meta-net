@@ -33,6 +33,7 @@
 ;;; Code:
 
 (require 'xml)
+(require 'meta-net-util)
 
 (defgroup meta-net nil
   "Parse .NET assembly's XML."
@@ -86,16 +87,17 @@ variable `meta-net-csproj'.")
     ))
 
 ;;;###autoload
-(defun meta-net-search-file (path)
-  "Read .NET csproj from PATH.
-
-Argument PATH should be a file under a csproj."
-  )
-
-;;;###autoload
-(defun meta-net-search-this-file ()
-  "Read .NET csproj current file."
-  (meta-net-search-file (buffer-file-name)))
+(defun meta-net-read-project ()
+  "Read .NET csproj from current project."
+  (let ((project (meta-net-util-project-current)) (path (buffer-file-name))
+        csprojs)
+    (if (not project) (user-error "Path is not under project root: %s" path)
+      (meta-net-util-walk-path
+       path
+       (lambda (current)
+         (setq csprojs (f--files current (equal (f-ext it) "csproj")))
+         (when csprojs (setq meta-net-csproj-current csprojs)))
+       project))))
 
 (provide 'meta-net)
 ;;; meta-net.el ends here

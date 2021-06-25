@@ -7,7 +7,7 @@
 ;; Description: Parse .NET assembly's XML
 ;; Keyword: assembly xml utility
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "24.3"))
+;; Package-Requires: ((emacs "24.3") (ht "2.3"))
 ;; URL: https://github.com/emacs-vs/meta-net
 
 ;; This file is NOT part of GNU Emacs.
@@ -32,6 +32,7 @@
 
 ;;; Code:
 
+(require 'ht)
 (require 'xml)
 (require 'meta-net-util)
 
@@ -53,12 +54,10 @@
 (defconst meta-net--tag-enum "F:"
   "Tag represent enum item.")
 
-(defvar meta-net-csproj nil
-  "Alist to store all .csproj file with it's reference data.
+(defvar meta-net-csproj (ht-create)
+  "Store all csproj entry to it's data in hash table.
 
-This variable should only be global variable and should not set it to local.
-
-The data should be a list of (<path> . <references data>)")
+Data is in (path . data), data is csproj and it's in xml.")
 
 (defvar-local meta-net-csproj-current nil
   "Store csproj files for each existing buffer.
@@ -66,15 +65,22 @@ The data should be a list of (<path> . <references data>)")
 Local variable stores a list of csproj path, please use the path as id to
 variable `meta-net-csproj'.")
 
+(defvar meta-net-xml (ht-create)
+  "Store all assembly xml files to it's data in hash table.
+
+Data is in (path . data), data is xml that records assembly's information.")
+
 (defun meta-net--parse-csproj-xml (path)
   "Parse a csproj xml from PATH."
   (let* ((parse-tree (xml-parse-file path))
          (project-node (assq 'Project parse-tree))
-         (item-group (xml-get-children project-node 'ItemGroup)))
-    (dolist (item item-group)
-      (jcs-print item)
-      )
-    ))
+         (item-groups (xml-get-children project-node 'ItemGroup))
+         reference)
+    (dolist (item-group item-groups)
+      (setq reference (xml-get-children item-group 'Reference))
+      (when reference
+        (jcs-print reference))
+      )))
 
 (defun meta-net--parse-assembly-xml (path)
   "Parse a assembly (dll) xml from PATH."
@@ -89,15 +95,28 @@ variable `meta-net-csproj'.")
 ;;;###autoload
 (defun meta-net-read-project ()
   "Read .NET csproj from current project."
-  (let ((project (meta-net-util-project-current)) (path (buffer-file-name))
-        csprojs)
+  (let ((project (meta-net-util-project-current)) (path (buffer-file-name)) csprojs)
     (if (not project) (user-error "Path is not under project root: %s" path)
       (meta-net-util-walk-path
        path
        (lambda (current)
          (setq csprojs (f--files current (equal (f-ext it) "csproj")))
-         (when csprojs (setq meta-net-csproj-current csprojs)))
-       project))))
+         (when csprojs
+           (setq meta-net-csproj-current csprojs)
+           (meta-net-create-entry)))
+       project)))
+  (meta-net-build-data))
+
+(defun meta-net-create-entry ()
+  "Create new entry from current buffer."
+  (dolist (entry meta-net-csproj-current) (ht-set meta-net-csproj entry nil)))
+
+(defun meta-net-build-data ()
+  "Read "
+  (let ((keys (ht-keys meta-net-csproj)))
+    (dolist (key keys)
+      (unless (ht-get meta-net-csproj key)
+        (ht-set meta-net-csproj key (meta-net--parse-csproj-xml key))))))
 
 (provide 'meta-net)
 ;;; meta-net.el ends here

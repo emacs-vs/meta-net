@@ -7,7 +7,7 @@
 ;; Description: Parse .NET assembly's XML
 ;; Keyword: assembly xml utility
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "24.3") (ht "2.3"))
+;; Package-Requires: ((emacs "24.3") (ht "2.3") (f "0.20.0"))
 ;; URL: https://github.com/emacs-vs/meta-net
 
 ;; This file is NOT part of GNU Emacs.
@@ -32,8 +32,10 @@
 
 ;;; Code:
 
+(require 'f)
 (require 'ht)
 (require 'xml)
+
 (require 'meta-net-util)
 
 (defgroup meta-net nil
@@ -75,12 +77,16 @@ Data is in (path . data), data is xml that records assembly's information.")
   (let* ((parse-tree (xml-parse-file path))
          (project-node (assq 'Project parse-tree))
          (item-groups (xml-get-children project-node 'ItemGroup))
-         reference)
+         refs hint-path attr-include)
     (dolist (item-group item-groups)
-      (setq reference (xml-get-children item-group 'Reference))
-      (when reference
-        (jcs-print reference))
-      )))
+      (setq refs (xml-get-children item-group 'Reference))
+      (dolist (ref refs)
+        (setq attr-include (xml-get-attribute ref 'Include)
+              hint-path (nth 2 (car (xml-get-children ref 'HintPath))))
+        (unless (file-exists-p hint-path)  ; Convert relative path to absolute path
+          (setq hint-path (f-join (meta-net-util-project-current) hint-path)))
+        (setq hint-path (f-swap-ext hint-path "xml"))
+        (meta-net-create-entry-xml hint-path)))))
 
 (defun meta-net--parse-assembly-xml (path)
   "Parse a assembly (dll) xml from PATH."
@@ -103,13 +109,17 @@ Data is in (path . data), data is xml that records assembly's information.")
          (setq csprojs (f--files current (equal (f-ext it) "csproj")))
          (when csprojs
            (setq meta-net-csproj-current csprojs)
-           (meta-net-create-entry)))
+           (meta-net-create-entry-csporj)))
        project)))
   (meta-net-build-data))
 
-(defun meta-net-create-entry ()
-  "Create new entry from current buffer."
+(defun meta-net-create-entry-csporj ()
+  "Create new csproj entry from current buffer."
   (dolist (entry meta-net-csproj-current) (ht-set meta-net-csproj entry nil)))
+
+(defun meta-net-create-entry-xml (hint-path)
+  "Create new xml entry from current buffer."
+  (when (file-exists-p hint-path) (ht-set meta-net-xml hint-path nil)))
 
 (defun meta-net-build-data ()
   "Read "

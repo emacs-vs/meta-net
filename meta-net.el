@@ -72,6 +72,22 @@ variable `meta-net-csproj'.")
 
 Data is in (path . data), data is xml that records assembly's information.")
 
+(defvar meta-net-show-log nil
+  "Show the debug message from this package.")
+
+;;
+;; (@* "Util" )
+;;
+
+(defun meta-net-log (fmt &rest args)
+  "Debug message like function `message' with same argument FMT and ARGS."
+  (when meta-net-show-log
+    (let (message-log-max) (apply 'message fmt args))))
+
+;;
+;; (@* "Core" )
+;;
+
 (defun meta-net--parse-csproj-xml (path)
   "Parse a csproj xml from PATH."
   (let* ((parse-tree (xml-parse-file path))
@@ -99,34 +115,50 @@ Data is in (path . data), data is xml that records assembly's information.")
     ))
 
 ;;;###autoload
-(defun meta-net-read-project ()
-  "Read .NET csproj from current project."
-  (let ((project (meta-net-util-project-current)) (path (buffer-file-name)) csprojs)
-    (if (not project) (user-error "Path is not under project root: %s" path)
-      (meta-net-util-walk-path
-       path
-       (lambda (current)
-         (setq csprojs (f--files current (equal (f-ext it) "csproj")))
-         (when csprojs
-           (setq meta-net-csproj-current csprojs)
-           (meta-net-create-entry-csporj)))
-       project)))
-  (meta-net-build-data))
+(defun meta-net-read-project (&optional force)
+  "Read .NET csproj from current project.
+
+If argument FORCE is non-nil, refresh cache and rebuild data cleanly.
+
+P.S. Please call the function under the a project."
+  (when force (setq meta-net-csproj-current nil))
+  (if meta-net-csproj-current
+      (user-error "Data has been built, pass FORCE with t to rebuild")
+    (let ((project (meta-net-util-project-current)) (path (buffer-file-name)) csprojs)
+      (if (not project) (user-error "Path is not under project root: %s" path)
+        (meta-net-util-walk-path
+         path
+         (lambda (current)
+           (setq csprojs (f--files current (equal (f-ext it) "csproj")))
+           (when csprojs
+             (setq meta-net-csproj-current csprojs)
+             (meta-net-create-entry-csporj)))
+         project)))
+    (meta-net-build-data)))
 
 (defun meta-net-create-entry-csporj ()
   "Create new csproj entry from current buffer."
-  (dolist (entry meta-net-csproj-current) (ht-set meta-net-csproj entry nil)))
+  (dolist (entry meta-net-csproj-current)
+    (meta-net-log "Create csporj entry: `%s`" entry)
+    (ht-set meta-net-csproj entry nil)))
 
 (defun meta-net-create-entry-xml (hint-path)
   "Create new xml entry from current buffer."
-  (when (file-exists-p hint-path) (ht-set meta-net-xml hint-path nil)))
+  (when (file-exists-p hint-path)
+    (meta-net-log "Create xml entry: `%s`" hint-path)
+    (ht-set meta-net-xml hint-path nil)))
 
 (defun meta-net-build-data ()
-  "Read "
-  (let ((keys (ht-keys meta-net-csproj)))
-    (dolist (key keys)
+  "Read all csproj files and build all assembly xml files."
+  (let ((keys-csproj (ht-keys meta-net-csproj)))
+    (dolist (key keys-csproj)
       (unless (ht-get meta-net-csproj key)
-        (ht-set meta-net-csproj key (meta-net--parse-csproj-xml key))))))
+        (ht-set meta-net-csproj key (meta-net--parse-csproj-xml key)))))
+  (let ((keys-xml (ht-keys meta-net-xml)))
+    (dolist (key keys-xml)
+      (unless (ht-get meta-net-xml key)
+        (ht-set meta-net-xml key (meta-net--parse-assembly-xml key)))))
+  (meta-net-log "Done rebuild solution for project: `%s`" (meta-net-util-project-current)))
 
 (provide 'meta-net)
 ;;; meta-net.el ends here

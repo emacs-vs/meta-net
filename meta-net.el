@@ -79,7 +79,7 @@ variable `meta-net-csproj'.")
 
 Data look like (path . data), data is xml that records assembly's information.")
 
-(defvar meta-net-show-log nil
+(defvar meta-net-show-log t
   "Show the debug message from this package.")
 
 ;;
@@ -117,8 +117,8 @@ Data look like (path . data), data is xml that records assembly's information.")
          (doc-node (assq 'doc parse-tree))
          (assembly (car (xml-get-children doc-node 'assembly)))
          (members (xml-get-children doc-node 'members)))
-    (jcs-print assembly)
-    (jcs-print members)
+    (logms assembly)
+    ;;(jcs-print members)
     ))
 
 ;;;###autoload
@@ -127,7 +127,7 @@ Data look like (path . data), data is xml that records assembly's information.")
 
 If argument FORCE is non-nil, refresh cache and rebuild data cleanly.
 
-P.S. Please call the function under the a project."
+P.S. Please call the function under a project."
   (when force (setq meta-net-csproj-current nil))
   (if meta-net-csproj-current
       (user-error "Data has been built, pass FORCE with t to rebuild")
@@ -167,16 +167,20 @@ P.S. Use this carefully since this will overwrite the existing key with null."
     (ht-set meta-net-xml hint-path nil)))
 
 (defun meta-net-build-data ()
-  "Read all csproj files and build all assembly xml files."
-  (let ((keys-csproj (ht-keys meta-net-csproj)))
-    (dolist (key keys-csproj)
-      (unless (ht-get meta-net-csproj key)  ; Read only value it's null to save performance
-        (ht-set meta-net-csproj key (meta-net--parse-csproj-xml key)))))
-  (let ((keys-xml (ht-keys meta-net-xml)))
-    (dolist (key keys-xml)
-      (unless (ht-get meta-net-xml key)  ; Read only value it's null to save performance
-        (ht-set meta-net-xml key (meta-net--parse-assembly-xml key)))))
-  (meta-net-log "Done rebuild solution for project: `%s`" (meta-net-util-project-current)))
+  "Read all csproj files and read all assembly xml files to usable data."
+  (let ((built t))
+    (let ((keys-csproj (ht-keys meta-net-csproj)))
+      (dolist (key keys-csproj)
+        (unless (ht-get meta-net-csproj key)  ; Read only value it's null to save performance
+          (setq built nil)
+          (ht-set meta-net-csproj key (meta-net--parse-csproj-xml key)))))
+    (let ((keys-xml (ht-keys meta-net-xml)))
+      (dolist (key keys-xml)
+        (unless (ht-get meta-net-xml key)  ; Read only value it's null to save performance
+          (setq built nil)
+          (ht-set meta-net-xml key (meta-net--parse-assembly-xml key)))))
+    (if built (message "Everything up to date, no need to rebuild")
+      (message "Done rebuild solution for project: `%s`" (meta-net-util-project-current)))))
 
 (provide 'meta-net)
 ;;; meta-net.el ends here

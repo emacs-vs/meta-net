@@ -56,10 +56,17 @@
 (defconst meta-net--tag-enum "F:"
   "Tag represent enum item.")
 
+(defvar meta-net-projects (ht-create)
+  "Store all the project points to csporj files.
+
+This prevents reading the same project and waste performance.
+
+Data look like (path . csprojs.")
+
 (defvar meta-net-csproj (ht-create)
   "Store all csproj entry to it's data in hash table.
 
-Data is in (path . data), data is csproj and it's in xml.")
+Data look like (path . data), data is csproj and it's in xml.")
 
 (defvar-local meta-net-csproj-current nil
   "Store csproj files for each existing buffer.
@@ -70,7 +77,7 @@ variable `meta-net-csproj'.")
 (defvar meta-net-xml (ht-create)
   "Store all assembly xml files to it's data in hash table.
 
-Data is in (path . data), data is xml that records assembly's information.")
+Data look like (path . data), data is xml that records assembly's information.")
 
 (defvar meta-net-show-log nil
   "Show the debug message from this package.")
@@ -129,21 +136,32 @@ P.S. Please call the function under the a project."
         (meta-net-util-walk-path
          path
          (lambda (current)
-           (setq csprojs (f--files current (equal (f-ext it) "csproj")))
-           (when csprojs
-             (setq meta-net-csproj-current csprojs)
-             (meta-net-create-entry-csporj)))
+           (setq csprojs (ht-get meta-net-projects current))  ; get csporj files if already exists
+           ;; if exists, we don't need to read it again
+           (if (and csprojs (not force))  ; if force, we need to refresh it
+               (setq meta-net-csproj-current current)  ; records the key (current)
+             (setq csprojs (f--files current (equal (f-ext it) "csproj")))
+             (when csprojs  ; found csproj files in `current' directory
+               (setq meta-net-csproj-current current)  ; record it's key
+               (ht-set meta-net-projects current csprojs)
+               (meta-net-create-entry-csporj csprojs))))
          project)))
     (meta-net-build-data)))
 
-(defun meta-net-create-entry-csporj ()
-  "Create new csproj entry from current buffer."
-  (dolist (entry meta-net-csproj-current)
+(defun meta-net-create-entry-csporj (csprojs)
+  "Create new csproj entry from current buffer.
+
+Argument CSPROJS is a list of csporj files for use to create.
+
+P.S. Use this carefully since this will overwrite the existing key with null."
+  (dolist (entry csprojs)
     (meta-net-log "Create csporj entry: `%s`" entry)
     (ht-set meta-net-csproj entry nil)))
 
 (defun meta-net-create-entry-xml (hint-path)
-  "Create new xml entry from current buffer."
+  "Create new xml entry from current buffer.
+
+P.S. Use this carefully since this will overwrite the existing key with null."
   (when (file-exists-p hint-path)
     (meta-net-log "Create xml entry: `%s`" hint-path)
     (ht-set meta-net-xml hint-path nil)))
@@ -152,11 +170,11 @@ P.S. Please call the function under the a project."
   "Read all csproj files and build all assembly xml files."
   (let ((keys-csproj (ht-keys meta-net-csproj)))
     (dolist (key keys-csproj)
-      (unless (ht-get meta-net-csproj key)
+      (unless (ht-get meta-net-csproj key)  ; Read only value it's null to save performance
         (ht-set meta-net-csproj key (meta-net--parse-csproj-xml key)))))
   (let ((keys-xml (ht-keys meta-net-xml)))
     (dolist (key keys-xml)
-      (unless (ht-get meta-net-xml key)
+      (unless (ht-get meta-net-xml key)  ; Read only value it's null to save performance
         (ht-set meta-net-xml key (meta-net--parse-assembly-xml key)))))
   (meta-net-log "Done rebuild solution for project: `%s`" (meta-net-util-project-current)))
 

@@ -59,7 +59,10 @@
 (defvar meta-net-projects (ht-create)
   "Store all the project points to csporj files.
 
-This prevents reading the same project and waste performance.
+This prevents reading the same project and waste it's performance.  Notice
+project path here aren't source control path.  It's just the parent path of
+all .csproj file so this will work without the source control or one repository
+with multiple projects' structure.
 
 Data look like (path . (csporj_1, csproj_2)).")
 
@@ -95,10 +98,9 @@ Data look like (assembly-xml-path . xml-data), data is xml that records assembly
 ;; (@* "Core" )
 ;;
 
-(defun meta-net--parse-csproj-xml (path)
-  "Parse a csproj xml from PATH."
-  (let* ((parse-tree (xml-parse-file path))
-         (project-node (assq 'Project parse-tree))
+(defun meta-net--parse-csproj-xml (parse-tree)
+  "Parse a csproj xml from PARSE-TREE."
+  (let* ((project-node (assq 'Project parse-tree))
          (item-groups (xml-get-children project-node 'ItemGroup))
          refs hint-path attr-include)
     (dolist (item-group item-groups)
@@ -111,10 +113,9 @@ Data look like (assembly-xml-path . xml-data), data is xml that records assembly
         (setq hint-path (f-swap-ext hint-path "xml"))
         (meta-net-create-entry-xml hint-path)))))
 
-(defun meta-net--parse-assembly-xml (path)
-  "Parse a assembly (dll) xml from PATH."
-  (let* ((parse-tree (xml-parse-file path))
-         (doc-node (assq 'doc parse-tree))
+(defun meta-net--parse-assembly-xml (parse-tree)
+  "Parse a assembly (dll) xml from PARSE-TREE."
+  (let* ((doc-node (assq 'doc parse-tree))
          (assembly (car (xml-get-children doc-node 'assembly)))
          (members (xml-get-children doc-node 'members)))
     (jcs-print assembly)
@@ -171,17 +172,20 @@ P.S. Use this carefully since this will overwrite the existing key with null."
 (defun meta-net-build-data ()
   "Read all csproj files and read all assembly xml files to usable data."
   (let ((built t))
-    (let ((keys-csproj (ht-keys meta-net-csproj)))
+    (let ((keys-csproj (ht-keys meta-net-csproj)) parse-tree)
       (dolist (key keys-csproj)  ; key here, is the csporj path
         (unless (ht-get meta-net-csproj key)  ; Read only value it's null to save performance
-          (setq built nil)
-          (ht-set meta-net-csproj key (xml-parse-file path))
-          (meta-net--parse-csproj-xml key))))
+          (setq built nil
+                parse-tree (xml-parse-file key))
+          (ht-set meta-net-csproj key parse-tree)
+          (meta-net--parse-csproj-xml parse-tree))))
     (let ((keys-xml (ht-keys meta-net-xml)))
       (dolist (key keys-xml)  ; key here, is the xml path
         (unless (ht-get meta-net-xml key)  ; Read only value it's null to save performance
-          (setq built nil)
-          (ht-set meta-net-xml key (meta-net--parse-assembly-xml key)))))
+          (setq built nil
+                parse-tree (xml-parse-file key))
+          (ht-set meta-net-xml key parse-tree)
+          (meta-net--parse-assembly-xml parse-tree))))
     (if built (message "Everything up to date, no need to rebuild")
       (message "Done rebuild solution for project: `%s`" (meta-net-util-project-current)))))
 

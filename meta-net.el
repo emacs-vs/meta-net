@@ -61,12 +61,12 @@
 
 This prevents reading the same project and waste performance.
 
-Data look like (path . csprojs.")
+Data look like (path . (csporj_1, csproj_2)).")
 
 (defvar meta-net-csproj (ht-create)
   "Store all csproj entry to it's data in hash table.
 
-Data look like (path . data), data is csproj and it's in xml.")
+Data look like (csproj . xml), data is csproj and it's in xml.")
 
 (defvar-local meta-net-csproj-current nil
   "Store csproj files for each existing buffer.
@@ -77,7 +77,7 @@ variable `meta-net-csproj'.")
 (defvar meta-net-xml (ht-create)
   "Store all assembly xml files to it's data in hash table.
 
-Data look like (path . data), data is xml that records assembly's information.")
+Data look like (assembly-xml-path . xml-data), data is xml that records assembly's information.")
 
 (defvar meta-net-show-log t
   "Show the debug message from this package.")
@@ -132,7 +132,8 @@ P.S. Please call the function under a project."
   (when force (setq meta-net-csproj-current nil))
   (if meta-net-csproj-current
       (user-error "Data has been built, pass FORCE with t to rebuild")
-    (let ((project (meta-net-util-project-current)) (path (buffer-file-name)) csprojs)
+    (let ((project (meta-net-util-project-current)) (path (f-parent (buffer-file-name)))
+          csprojs)
       (if (not project) (user-error "Path is not under project root: %s" path)
         (meta-net-util-walk-path
          path
@@ -171,13 +172,13 @@ P.S. Use this carefully since this will overwrite the existing key with null."
   "Read all csproj files and read all assembly xml files to usable data."
   (let ((built t))
     (let ((keys-csproj (ht-keys meta-net-csproj)))
-      (dolist (key keys-csproj)
+      (dolist (key keys-csproj)  ; key here, is the csporj path
         (unless (ht-get meta-net-csproj key)  ; Read only value it's null to save performance
           (setq built nil)
           (ht-set meta-net-csproj key (xml-parse-file path))
           (meta-net--parse-csproj-xml key))))
     (let ((keys-xml (ht-keys meta-net-xml)))
-      (dolist (key keys-xml)
+      (dolist (key keys-xml)  ; key here, is the xml path
         (unless (ht-get meta-net-xml key)  ; Read only value it's null to save performance
           (setq built nil)
           (ht-set meta-net-xml key (meta-net--parse-assembly-xml key)))))

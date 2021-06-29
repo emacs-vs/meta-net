@@ -117,7 +117,8 @@ Data look like (path . data), data is xml that records assembly's information.")
          (doc-node (assq 'doc parse-tree))
          (assembly (car (xml-get-children doc-node 'assembly)))
          (members (xml-get-children doc-node 'members)))
-    (logms assembly)
+    (jcs-print assembly)
+    (when assembly)
     ;;(jcs-print members)
     ))
 
@@ -173,7 +174,8 @@ P.S. Use this carefully since this will overwrite the existing key with null."
       (dolist (key keys-csproj)
         (unless (ht-get meta-net-csproj key)  ; Read only value it's null to save performance
           (setq built nil)
-          (ht-set meta-net-csproj key (meta-net--parse-csproj-xml key)))))
+          (ht-set meta-net-csproj key (xml-parse-file path))
+          (meta-net--parse-csproj-xml key))))
     (let ((keys-xml (ht-keys meta-net-xml)))
       (dolist (key keys-xml)
         (unless (ht-get meta-net-xml key)  ; Read only value it's null to save performance

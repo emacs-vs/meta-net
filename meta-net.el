@@ -131,7 +131,8 @@ P.S. Please call the function under a project."
   (when force (setq meta-net-csproj-current nil))
   (if meta-net-csproj-current
       (user-error "Data has been built, pass FORCE with t to rebuild")
-    (let ((project (meta-net-util-project-current)) (path (buffer-file-name)) csprojs)
+    (let ((project (meta-net-util-project-current)) (path (f-parent (buffer-file-name)))
+          csprojs)
       (if (not project) (user-error "Path is not under project root: %s" path)
         (meta-net-util-walk-path
          path

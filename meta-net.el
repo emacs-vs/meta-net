@@ -250,8 +250,8 @@ P.S. Use this carefully since this will overwrite the existing key with null."
 See variable `meta-net-projects' description for argument PROJECT."
   (ht-get meta-net-projects (or project meta-net-csproj-current)))
 
-(defun meta-net-solution-names (&optional project)
-  "Return a list of solutions names.
+(defun meta-net-csproj-names (&optional project)
+  "Return a list of csproj names.
 
 See variable `meta-net-projects' description for argument PROJECT."
   (let (solutions)

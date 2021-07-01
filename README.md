@@ -6,7 +6,20 @@
 
 ## :floppy_disk: Quickstart
 
-N/A
+```el
+(meta-net-read-project)  ; read and build data in .cs file
+
+(meta-net-solution-names)  ; Return a list of solutions names
+
+(let* ((first-csproj (nth 0 meta-net-csproj-current))  ; Get the first csproj in solution
+       (data (ht-get meta-net-csproj first-csproj))
+       xml first-xml)
+  (ht-get data 'constants)      ; Constants defined in this C# project
+  (setq xml (ht-get data 'xml)  ; List of path to available assembly xml
+        first-xml (nth 0 xml))  ; Get the first for example,
+  (ht-get meta-net-xml first-xml)  ; ...
+  )
+```
 
 ## Contribution
 

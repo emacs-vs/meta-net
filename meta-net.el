@@ -36,8 +36,6 @@
 (require 'ht)
 (require 'xml)
 
-(require 'meta-net-util)
-
 (defgroup meta-net nil
   "Parse .NET assembly's XML."
   :prefix "meta-net-"
@@ -66,20 +64,20 @@ with multiple projects' structure.
 
 Data look like (path . (csporj_1, csproj_2)).")
 
+(defvar-local meta-net-csproj-current nil
+  "Path that points to current buffer's csporj files.
+
+Please use this variable with variable `meta-net-projects' to get the full
+list of csproj.")
+
 (defvar meta-net-csproj (ht-create)
-  "Store all csproj file entries.
+  "Mapping of all csproj file entries.
 
 Store data in (path . hash-table); hash-table are data defined in csporj.
 See function `meta-net--parse-csproj-xml' to get more information.")
 
-(defvar-local meta-net-csproj-current nil
-  "Store csproj files for each existing buffer.
-
-Local variable stores a list of csproj path, please use the path as id to
-variable `meta-net-csproj'.")
-
 (defvar meta-net-xml (ht-create)
-  "Store all assembly xml files to it's data in hash table.
+  "Mapping of all assembly xml files to it's data in hash table.
 
 Store data in (path . hash-table); hash-table are data defined in assembly xml.")
 
@@ -95,9 +93,61 @@ Store data in (path . hash-table); hash-table are data defined in assembly xml."
   (when meta-net-show-log
     (let (message-log-max) (apply 'message fmt args))))
 
+(defun meta-net--project-current ()
+  "Return the current project root."
+  (cdr (project-current)))
+
+(defun meta-net--walk-path (path fnc &optional start-path)
+  "Walk through PATH and execute FNC.
+
+Argument START-PATH should be sub directory from PATH."
+  (let* ((lst (f-split path)) (lst-start (when start-path (f-split start-path)))
+         (len (length lst)) (len-start (length lst-start))
+         (index (if start-path (1- len-start) 0))
+         (current (if start-path start-path (nth index lst)))
+         break)
+    (while (and (not break) (< index len))
+      (when (file-directory-p current)
+        (setq break (funcall fnc current)))
+      (setq index (1+ index))
+      (when (< index len)
+        (setq current (f-slash (f-join current (nth index lst))))))))
+
 ;;
 ;; (@* "Core" )
 ;;
+
+(defun meta-net--grab-define-constants (project-node)
+  "Return list of string that are define constants.
+
+Argument PROJECT-NODE is the root node from a csproj file."
+  (let ((project-groups (xml-get-children project-node 'PropertyGroup))
+        constants)
+    (dolist (project-group project-groups)
+      (setq constants (car (xml-get-children project-group 'DefineConstants)))
+      (when constants
+        (setq constants (nth 2 constants)
+              constants (split-string constants ";"))))
+    constants))
+
+(defun meta-net--grab-assembly-xml (project-node)
+  "Return a list of path that are assembly xml.
+
+Argument PROJECT-NODE is the root node from a csproj file."
+  (let ((item-groups (xml-get-children project-node 'ItemGroup))
+        refs hint-path attr-include xml)
+    (dolist (item-group item-groups)
+      (setq refs (xml-get-children item-group 'Reference))
+      (dolist (ref refs)
+        (setq attr-include (xml-get-attribute ref 'Include)
+              hint-path (nth 2 (car (xml-get-children ref 'HintPath))))
+        (unless (file-exists-p hint-path)  ; Convert relative path to absolute path
+          (setq hint-path (f-join (meta-net--project-current) hint-path)))
+        (setq hint-path (f-swap-ext hint-path "xml"))
+        (when (file-exists-p hint-path)  ; file must exists
+          (meta-net-create-entry-xml hint-path)
+          (push hint-path xml))))
+    xml))
 
 (defun meta-net--parse-csproj-xml (path)
   "Parse a csproj xml from PATH and return data in hash table.
@@ -108,24 +158,12 @@ Data hash table includes these keys,
    * xml       - return a list of assembly xml path.
 
 You can access these data through variable `meta-net-csproj'."
-  (let* ((result (ht-create)) constants xml
-         (parse-tree (xml-parse-file path))
+  (let* ((result (ht-create)) (parse-tree (xml-parse-file path))
          (project-node (assq 'Project parse-tree))
-         (item-groups (xml-get-children project-node 'ItemGroup))
-         refs hint-path attr-include)
-    ;; TODO: Grab define constans information..
+         constants xml)
+    (setq constants (meta-net--grab-define-constants project-node))
     (ht-set result 'constants constants)  ; add `constants' it to data
-    (dolist (item-group item-groups)
-      (setq refs (xml-get-children item-group 'Reference))
-      (dolist (ref refs)
-        (setq attr-include (xml-get-attribute ref 'Include)
-              hint-path (nth 2 (car (xml-get-children ref 'HintPath))))
-        (unless (file-exists-p hint-path)  ; Convert relative path to absolute path
-          (setq hint-path (f-join (meta-net-util-project-current) hint-path)))
-        (setq hint-path (f-swap-ext hint-path "xml"))
-        (when (file-exists-p path)
-          (meta-net-create-entry-xml hint-path)
-          (push hint-path xml))))
+    (setq xml (meta-net--grab-assembly-xml project-node))
     (ht-set result 'xml xml)  ; add `xml' it to data
     result))
 
@@ -151,12 +189,12 @@ P.S. Please call the function under a project."
   (when force (setq meta-net-csproj-current nil))
   (if meta-net-csproj-current
       (user-error "Data has been built, pass FORCE with t to rebuild")
-    (let ((project (meta-net-util-project-current)) (path (f-parent (buffer-file-name)))
+    (let ((project (meta-net--project-current)) (path (f-parent (buffer-file-name)))
           csprojs)
       (if (not project) (user-error "Path is not under project root: %s" path)
-        (meta-net-util-walk-path
+        (meta-net--walk-path
          path
-         (lambda (current)
+         (lambda (current)  ; current is the path of walking path
            (setq csprojs (ht-get meta-net-projects current))  ; get csporj files if already exists
            ;; if exists, we don't need to read it again
            (if (and csprojs (not force))  ; if force, we need to refresh it
@@ -186,30 +224,39 @@ P.S. Use this carefully since this will overwrite the existing key with null."
   (meta-net-log "Create xml entry: `%s`" path)
   (ht-set meta-net-xml path nil))
 
-(defun meta-net-build-data ()
+(defun meta-net-build-data (&optional force)
   "Read all csproj files and read all assembly xml files to usable data."
   (let ((built t))
     ;; Access csporj to get assembly information including the xml path
     (let ((keys-csproj (ht-keys meta-net-csproj)) result)
-      (dolist (key keys-csproj)                           ; key, is csporj path
-        (unless (ht-get meta-net-csproj key)              ; if it hasn't build, build it
-          (setq result (meta-net--parse-csproj-xml key))  ; start building data
+      (dolist (key keys-csproj)                              ; key, is csporj path
+        (when (or force (not (ht-get meta-net-csproj key)))  ; if it hasn't build, build it
+          (setq result (meta-net--parse-csproj-xml key))     ; start building data
           (ht-set meta-net-csproj key result)
           (setq built nil))))
     ;; Build assembly xml data to cache
     (let ((keys-xml (ht-keys meta-net-xml)) result)
       (dolist (key keys-xml)                                ; key, is xml path
-        (unless (ht-get meta-net-xml key)                   ; if it hasn't build, build it
+        (when (or force (not (ht-get meta-net-xml key)))    ; if it hasn't build, build it
           (setq result (meta-net--parse-assembly-xml key))  ; start building data
           (ht-set meta-net-xml key result)
           (setq built nil))))
     (if built (message "Everything up to date, no need to rebuild")
-      (message "Done rebuild solution for project: `%s`" (meta-net-util-project-current)))))
+      (message "Done rebuild solution for project: `%s`" (meta-net--project-current)))))
 
-(defun meta-net-solution-names ()
-  "Return a list of solutions names."
+(defun meta-net-csporj-files (&optional project)
+  "Return a list of csporj files.
+
+See variable `meta-net-projects' description for argument PROJECT."
+  (ht-get meta-net-projects (or project meta-net-csproj-current)))
+
+(defun meta-net-solution-names (&optional project)
+  "Return a list of solutions names.
+
+See variable `meta-net-projects' description for argument PROJECT."
   (let (solutions)
-    (dolist (path meta-net-csproj-current) (push (f-base path) solutions))
+    (dolist (path (meta-net-csporj-files project))
+      (push (f-base path) solutions))
     (reverse solutions)))
 
 (provide 'meta-net)

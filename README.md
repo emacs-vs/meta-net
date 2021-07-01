@@ -40,6 +40,10 @@ Return a list of csporj files
 
 Return a list of csporj names
 
+##### `(meta-net-define-constants)`
+
+Get a list of define constants from a csproj file.
+
 ## Contribution
 
 If you would like to contribute to this project, you may either

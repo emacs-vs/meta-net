@@ -16,13 +16,22 @@
        xml first-xml)
 
   (ht-get data 'constants)         ; Constants defined in this C# project
-  
+
   (setq xml (ht-get data 'xml)     ; List of path to available assembly xml
         first-xml (nth 0 xml))     ; Get the first for example,
 
   (ht-get meta-net-xml first-xml)  ; ...
   )
 ```
+
+## Documents
+
+* `meta-net-csproj-current` - Buffer local variable, stores the id to access current
+csproj data. Please use it with `meta-net-projects` to access the [solution](https://docs.microsoft.com/en-us/visualstudio/ide/solutions-and-projects-in-visual-studio?view=vs-2019)
+data.
+
+* `(meta-net-csproj-files)` - Return a list of csporj files
+* `(meta-net-csproj-names)` - Return a list of csporj name
 
 ## Contribution
 

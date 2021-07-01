@@ -212,7 +212,7 @@ P.S. Please call the function under a project."
 
 Argument CSPROJS is a list of csporj files for use to create.
 
-P.S. Use this carefully since this will overwrite the existing key with null."
+P.S. Use this carefully, this will overwrite the existing key with null."
   (dolist (entry csprojs)
     (meta-net-log "Create csporj entry: `%s`" entry)
     (ht-set meta-net-csproj entry nil)))
@@ -220,7 +220,7 @@ P.S. Use this carefully since this will overwrite the existing key with null."
 (defun meta-net-create-entry-xml (path)
   "Create new xml entry (PATH) from current buffer.
 
-P.S. Use this carefully since this will overwrite the existing key with null."
+P.S. Use this carefully, this will overwrite the existing key with null."
   (meta-net-log "Create xml entry: `%s`" path)
   (ht-set meta-net-xml path nil))
 
@@ -258,6 +258,14 @@ See variable `meta-net-projects' description for argument PROJECT."
     (dolist (path (meta-net-csporj-files project))
       (push (f-base path) solutions))
     (reverse solutions)))
+
+(defun meta-net-define-constants (csproj)
+  "Return define constans from a CSPROJ file."
+  (let ((constants (ht-get meta-net-csproj csproj)))
+    (if constants (ht-get constants 'constants)
+      (user-error (concat "CsProject not found, make sure you have read and "
+                          "built the data: `%s`")
+                  csproj))))
 
 (provide 'meta-net)
 ;;; meta-net.el ends here

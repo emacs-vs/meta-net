@@ -35,6 +35,7 @@
 (require 'f)
 (require 'ht)
 (require 'xml)
+(require 'subr-x)
 
 (defgroup meta-net nil
   "Parse .NET assembly's XML."
@@ -152,10 +153,10 @@ Argument PROJECT-NODE is the root node from a csproj file."
 (defun meta-net--parse-csproj-xml (path)
   "Parse a csproj xml from PATH and return data in hash table.
 
-Data hash table includes these keys,
+Hash table includes these following keys,
 
-   * constants - return a list of define constans
-   * xml       - return a list of assembly xml path.
+   * constants - A list of define constans
+   * xml       - A list of assembly xml path
 
 You can access these data through variable `meta-net-csproj'."
   (let* ((result (ht-create)) (parse-tree (xml-parse-file path))
@@ -168,14 +169,23 @@ You can access these data through variable `meta-net-csproj'."
     result))
 
 (defun meta-net--parse-assembly-xml (path)
-  "Parse a assembly (dll) xml from PATH and return data in hash table."
+  "Parse a assembly (dll) xml from PATH and return data in hash table.
+
+Hash table includes these following keys,
+
+   * type     - TODO
+   * property - TODO
+   * method   - TODO
+   * enum     - TODO
+
+You can access these data through variable `meta-net-xml'."
   (let* ((result (ht-create))
          (parse-tree (xml-parse-file path))
          (doc-node (assq 'doc parse-tree))
          (assembly (car (xml-get-children doc-node 'assembly)))
-         (members (xml-get-children doc-node 'members)))
-    (jcs-print assembly)
-    (when assembly)
+         (members (xml-get-children doc-node 'members))
+         type property method enum)
+    (when assembly (ht-set result 'assembly assembly))
     ;;(jcs-print members)
     result))
 
@@ -244,6 +254,10 @@ P.S. Use this carefully, this will overwrite the existing key with null."
     (if built (message "Everything up to date, no need to rebuild")
       (message "Done rebuild solution for project: `%s`" (meta-net--project-current)))))
 
+;;
+;; (@* "CsProj" )
+;;
+
 (defun meta-net-csporj-files (&optional project)
   "Return a list of csporj files.
 
@@ -259,13 +273,41 @@ See variable `meta-net-projects' description for argument PROJECT."
       (push (f-base path) solutions))
     (reverse solutions)))
 
-(defun meta-net-define-constants (csproj)
-  "Return define constans from a CSPROJ file."
-  (let ((constants (ht-get meta-net-csproj csproj)))
-    (if constants (ht-get constants 'constants)
-      (user-error (concat "CsProject not found, make sure you have read and "
-                          "built the data: `%s`")
-                  csproj))))
+(defun meta-net--get-csproj (path key)
+  "Return csproj data by it's PATH with KEY."
+  (if-let ((data (ht-get meta-net-csproj path)))
+      (ht-get data key)
+    (user-error "CsProj data not found, %s => `%s`" key path)))
+
+(defun meta-net-define-constants (path)
+  "Return define constants from a CSPROJ file."
+  (meta-net--get-csproj path 'constants))
+
+(defun meta-net-csproj-xmls (path)
+  "Return list of assembly xml files.
+
+Argument PATH is the csproj path that points to it file."
+  (meta-net--get-csproj path 'xml))
+
+;;
+;; (@* "Xmls" )
+;;
+
+(defun meta-net--get-xml (path key)
+  "Return xml data by it's PATH with KEY."
+  (if-let ((data (ht-get meta-net-xml path)))
+      (ht-get data key)
+    (user-error "Xml data not found, %s => `%s`" key path)))
+
+(defun meta-net-xml-assemly-name (path)
+  "Return the name of the assembly.
+
+Argument PATH is the path points to assembly xml file."
+  (meta-net--get-xml path 'assembly))
+
+(defun meta-net-xml-type (path)
+  ""
+  (meta-net--get-xml path 'type))
 
 (provide 'meta-net)
 ;;; meta-net.el ends here

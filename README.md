@@ -2,7 +2,7 @@
 ![CI](https://github.com/emacs-vs/meta-net/workflows/CI/badge.svg)
 
 # meta-net
-> Parse .NET assembly's XML
+> Parse C# .NET csproj to usable data
 
 ## :floppy_disk: Quickstart
 
@@ -24,7 +24,7 @@
   )
 ```
 
-## Documents
+## API
 
 ##### `meta-net-csproj-current`
 

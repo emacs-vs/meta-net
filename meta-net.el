@@ -108,11 +108,13 @@ Data hash table includes these keys,
    * xml       - return a list of assembly xml path.
 
 You can access these data through variable `meta-net-csproj'."
-  (let* ((result (ht-create))
+  (let* ((result (ht-create)) constants xml
          (parse-tree (xml-parse-file path))
          (project-node (assq 'Project parse-tree))
          (item-groups (xml-get-children project-node 'ItemGroup))
          refs hint-path attr-include)
+    ;; TODO: Grab define constans information..
+    (ht-set result 'constants constants)  ; add `constants' it to data
     (dolist (item-group item-groups)
       (setq refs (xml-get-children item-group 'Reference))
       (dolist (ref refs)
@@ -121,7 +123,10 @@ You can access these data through variable `meta-net-csproj'."
         (unless (file-exists-p hint-path)  ; Convert relative path to absolute path
           (setq hint-path (f-join (meta-net-util-project-current) hint-path)))
         (setq hint-path (f-swap-ext hint-path "xml"))
-        (meta-net-create-entry-xml hint-path)))
+        (when (file-exists-p path)
+          (meta-net-create-entry-xml hint-path)
+          (push hint-path xml))))
+    (ht-set result 'xml xml)  ; add `xml' it to data
     result))
 
 (defun meta-net--parse-assembly-xml (path)
@@ -178,9 +183,8 @@ P.S. Use this carefully since this will overwrite the existing key with null."
   "Create new xml entry (PATH) from current buffer.
 
 P.S. Use this carefully since this will overwrite the existing key with null."
-  (when (file-exists-p path)
-    (meta-net-log "Create xml entry: `%s`" path)
-    (ht-set meta-net-xml path nil)))
+  (meta-net-log "Create xml entry: `%s`" path)
+  (ht-set meta-net-xml path nil))
 
 (defun meta-net-build-data ()
   "Read all csproj files and read all assembly xml files to usable data."

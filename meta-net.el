@@ -67,9 +67,10 @@ with multiple projects' structure.
 Data look like (path . (csporj_1, csproj_2)).")
 
 (defvar meta-net-csproj (ht-create)
-  "Store all csproj entry to it's data in hash table.
+  "Store all csproj file entries.
 
-Data look like (csproj . xml), data is csproj and it's in xml.")
+Store data in (path . hash-table); hash-table are data defined in csporj.
+See function `meta-net--parse-csproj-xml' to get more information.")
 
 (defvar-local meta-net-csproj-current nil
   "Store csproj files for each existing buffer.
@@ -80,7 +81,7 @@ variable `meta-net-csproj'.")
 (defvar meta-net-xml (ht-create)
   "Store all assembly xml files to it's data in hash table.
 
-Data look like (assembly-xml-path . xml-data), data is xml that records assembly's information.")
+Store data in (path . hash-table); hash-table are data defined in assembly xml.")
 
 (defvar meta-net-show-log t
   "Show the debug message from this package.")
@@ -98,9 +99,18 @@ Data look like (assembly-xml-path . xml-data), data is xml that records assembly
 ;; (@* "Core" )
 ;;
 
-(defun meta-net--parse-csproj-xml (parse-tree)
-  "Parse a csproj xml from PARSE-TREE."
-  (let* ((project-node (assq 'Project parse-tree))
+(defun meta-net--parse-csproj-xml (path)
+  "Parse a csproj xml from PATH and return data in hash table.
+
+Data hash table includes these keys,
+
+   * constants - return a list of define constans
+   * xml       - return a list of assembly xml path.
+
+You can access these data through variable `meta-net-csproj'."
+  (let* ((result (ht-create))
+         (parse-tree (xml-parse-file path))
+         (project-node (assq 'Project parse-tree))
          (item-groups (xml-get-children project-node 'ItemGroup))
          refs hint-path attr-include)
     (dolist (item-group item-groups)
@@ -111,17 +121,20 @@ Data look like (assembly-xml-path . xml-data), data is xml that records assembly
         (unless (file-exists-p hint-path)  ; Convert relative path to absolute path
           (setq hint-path (f-join (meta-net-util-project-current) hint-path)))
         (setq hint-path (f-swap-ext hint-path "xml"))
-        (meta-net-create-entry-xml hint-path)))))
+        (meta-net-create-entry-xml hint-path)))
+    result))
 
-(defun meta-net--parse-assembly-xml (parse-tree)
-  "Parse a assembly (dll) xml from PARSE-TREE."
-  (let* ((doc-node (assq 'doc parse-tree))
+(defun meta-net--parse-assembly-xml (path)
+  "Parse a assembly (dll) xml from PATH and return data in hash table."
+  (let* ((result (ht-create))
+         (parse-tree (xml-parse-file path))
+         (doc-node (assq 'doc parse-tree))
          (assembly (car (xml-get-children doc-node 'assembly)))
          (members (xml-get-children doc-node 'members)))
     (jcs-print assembly)
     (when assembly)
     ;;(jcs-print members)
-    ))
+    result))
 
 ;;;###autoload
 (defun meta-net-read-project (&optional force)
@@ -161,33 +174,39 @@ P.S. Use this carefully since this will overwrite the existing key with null."
     (meta-net-log "Create csporj entry: `%s`" entry)
     (ht-set meta-net-csproj entry nil)))
 
-(defun meta-net-create-entry-xml (hint-path)
-  "Create new xml entry from current buffer.
+(defun meta-net-create-entry-xml (path)
+  "Create new xml entry (PATH) from current buffer.
 
 P.S. Use this carefully since this will overwrite the existing key with null."
-  (when (file-exists-p hint-path)
-    (meta-net-log "Create xml entry: `%s`" hint-path)
-    (ht-set meta-net-xml hint-path nil)))
+  (when (file-exists-p path)
+    (meta-net-log "Create xml entry: `%s`" path)
+    (ht-set meta-net-xml path nil)))
 
 (defun meta-net-build-data ()
   "Read all csproj files and read all assembly xml files to usable data."
   (let ((built t))
-    (let ((keys-csproj (ht-keys meta-net-csproj)) parse-tree)
-      (dolist (key keys-csproj)  ; key here, is the csporj path
-        (unless (ht-get meta-net-csproj key)  ; Read only value it's null to save performance
-          (setq built nil
-                parse-tree (xml-parse-file key))
-          (ht-set meta-net-csproj key parse-tree)
-          (meta-net--parse-csproj-xml parse-tree))))
-    (let ((keys-xml (ht-keys meta-net-xml)))
-      (dolist (key keys-xml)  ; key here, is the xml path
-        (unless (ht-get meta-net-xml key)  ; Read only value it's null to save performance
-          (setq built nil
-                parse-tree (xml-parse-file key))
-          (ht-set meta-net-xml key parse-tree)
-          (meta-net--parse-assembly-xml parse-tree))))
+    ;; Access csporj to get assembly information including the xml path
+    (let ((keys-csproj (ht-keys meta-net-csproj)) result)
+      (dolist (key keys-csproj)                           ; key, is csporj path
+        (unless (ht-get meta-net-csproj key)              ; if it hasn't build, build it
+          (setq result (meta-net--parse-csproj-xml key))  ; start building data
+          (ht-set meta-net-csproj key result)
+          (setq built nil))))
+    ;; Build assembly xml data to cache
+    (let ((keys-xml (ht-keys meta-net-xml)) result)
+      (dolist (key keys-xml)                                ; key, is xml path
+        (unless (ht-get meta-net-xml key)                   ; if it hasn't build, build it
+          (setq result (meta-net--parse-assembly-xml key))  ; start building data
+          (ht-set meta-net-xml key result)
+          (setq built nil))))
     (if built (message "Everything up to date, no need to rebuild")
       (message "Done rebuild solution for project: `%s`" (meta-net-util-project-current)))))
+
+(defun meta-net-solution-names ()
+  "Return a list of solutions names."
+  (let (solutions)
+    (dolist (path meta-net-csproj-current) (push (f-base path) solutions))
+    (reverse solutions)))
 
 (provide 'meta-net)
 ;;; meta-net.el ends here

@@ -26,17 +26,17 @@
 
 ## Documents
 
-#### `meta-net-csproj-current` -
+##### `meta-net-csproj-current` -
 
 Buffer local variable, stores the id to access current csproj data. Please use it
 with `meta-net-projects` to access the [solution](https://docs.microsoft.com/en-us/visualstudio/ide/solutions-and-projects-in-visual-studio?view=vs-2019)
 data.
 
-####  `(meta-net-csproj-files)`
+#####  `(meta-net-csproj-files)`
 
 Return a list of csporj files
 
-####  `(meta-net-csproj-names)`
+#####  `(meta-net-csproj-names)`
 
 Return a list of csporj names
 

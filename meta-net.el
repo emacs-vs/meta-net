@@ -205,7 +205,7 @@ P.S. Please call the function under a project."
                (ht-set meta-net-projects current csprojs)
                (meta-net-create-entry-csporj csprojs))))
          project)))
-    (meta-net-build-data)))
+    (meta-net-build-data force)))
 
 (defun meta-net-create-entry-csporj (csprojs)
   "Create new csproj entry from current buffer.

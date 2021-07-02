@@ -34,15 +34,28 @@ data.
 
 #####  `(meta-net-csproj-files &optional PROJECT)`
 
-Return a list of csporj files
+Get a list of csporj file path by PROJECT path.
 
-#####  `(meta-net-csproj-names)`
+#####  `(meta-net-csproj-names &optional PROJECT)`
 
-Return a list of csporj names
+Get a csporj base names by PROJECT path.
 
-##### `(meta-net-define-constants)`
+##### `(meta-net-define-constants PATH)`
 
-Get a list of define constants from a csproj file.
+Get a list of define constants from a csproj file. This is useful when you want
+to know what's enable or disable inside preprocessor.
+
+##### `(meta-net-csproj-xmls PATH)`
+
+Get a list of assembly xml files under a csproj PATH file.
+
+##### `(meta-net-xml-assemly-name PATH)`
+
+Return the name of the assembly xml file PATH.
+
+##### `(meta-net-xml-data PATH)`
+
+Access the xml data from assembly xml file PATH.
 
 ## :link: References
 

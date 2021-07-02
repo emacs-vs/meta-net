@@ -61,6 +61,9 @@
 (defconst meta-net--tag-event "E:"
   "Tag represent events.")
 
+(defconst meta-net--tag-unknown "?:"
+  "Tag represent unknown.")
+
 (defvar meta-net-projects (ht-create)
   "Store all the project points to csporj files.
 
@@ -188,6 +191,7 @@ You can access these data through variable `meta-net-csproj'."
         ((string-match-p meta-net--tag-field name)    'filed)
         ((string-match-p meta-net--tag-event name)    'event)
         ((string-match-p meta-net--tag-property name) 'property)
+        ((string-match-p meta-net--tag-unknown name)  'unknown)
         (t nil)))
 
 (defun meta-net--find-tag-string (name)
@@ -199,7 +203,8 @@ The value should be one of the follwin string, M:/T:/F:/P:/E:."
     (method   meta-net--tag-method)
     (field    meta-net--tag-field)
     (event    meta-net--tag-event)
-    (property meta-net--tag-property)))
+    (property meta-net--tag-property)
+    (unknown  meta-net--tag-unknown)))
 
 (defun meta-net--rip-tag-name (name)
   "Rip off the tag from NAME.
@@ -214,17 +219,26 @@ Argument DOC-NODE is the root from assembly xml file."
   (let* ((result (ht-create))
          (members-node (car (xml-get-children doc-node 'members)))
          (members (xml-get-children members-node 'member))
-         name-no-tag  ; name without the tag
-         type-name  ; we use this as a key
-         type-data  ; this as a data from type-name
-         tag
-         name summary-node para summary params)
+         tag            ; current tag
+         name-no-tag    ; name without the tag
+         comp-name      ; actual name of the component after `.`
+         type-name      ; we use this as a key
+         type-data      ; data from current `type`
+         ;; -- SUBSETS -------------------------------------------------
+         methods-data     ; current methods data, subset of type-data
+         fields-data      ; current fields data, subset of type-data
+         events-data      ; current events data, subset of type-data
+         properties-data  ; current properties data, subset of type-data
+         ;; ------------------------------------------------------------
+         name summary-node para summary)
     (dolist (member members)
       (meta-net-debug "\f")
       (meta-net-debug "%s" member)
+      ;; Get all necessary information from current `member` group
       (setq name (xml-get-attribute member 'name)
             tag (meta-net--find-tag name)
             name-no-tag (meta-net--rip-tag-name name)
+            comp-name (s-replace (concat name ".") "" name-no-tag)
             summary-node (car (xml-get-children member 'summary))
             summary (nth 2 summary-node)
             para (nth 3 summary-node))
@@ -233,23 +247,37 @@ Argument DOC-NODE is the root from assembly xml file."
       (meta-net-debug "---------")
       (meta-net-debug "name: %s" name)
       (meta-net-debug "summary: `%s`" summary)
-      (cl-case (meta-net--find-tag name)
+      (cl-case tag
         (type
          (setq type-name name-no-tag
-               type-data (ht-create))
-         (ht-set result type-name type-data))
+               type-data (ht-create)
+               methods-data (ht-create) fields-data (ht-create)
+               events-data (ht-create) properties-data (ht-create))
+         (ht-set result type-name type-data)
+         (ht-set type-data 'methods methods-data)
+         (ht-set type-data 'fields fields-data)
+         (ht-set type-data 'events events-data)
+         (ht-set type-data 'properties properties-data))
         (method
-         ;; TODO: ..
-         (ht-set type-data 'method ))
+         (let ((data (ht-create)) params)
+           (ht-set data 'summary summary)
+           (ht-set data 'params nil)  ; TODO: ..
+           (ht-set methods-data comp-name data)))
         (field
-         ;; TODO: ..
-         )
+         (let ((data (ht-create)))
+           (ht-set data 'summary summary)
+           (ht-set fields-data comp-name data)))
         (event
-         ;; TODO: ..
-         )
+         (let ((data (ht-create)))
+           (ht-set data 'summary summary)
+           (ht-set events-data comp-name data)))
         (property
-         ;; TODO: ..
-         )))
+         (let ((data (ht-create)))
+           (ht-set data 'summary summary)
+           (ht-set properties-data comp-name data)))
+        (unknown
+         ;; TODO: What should we do for unknown tag?
+         (meta-net-debug "Detect unkown tag `%s`, name `%s`" meta-net--tag-unknown name-no-tag))))
     result))
 
 (defun meta-net--parse-assembly-xml (path)

@@ -55,7 +55,7 @@
 (defconst meta-net--tag-fields "F:"
   "Tag represent fields.")
 
-(defconst meta-net--tag-events "F:"
+(defconst meta-net--tag-events "E:"
   "Tag represent events.")
 
 (defvar meta-net-projects (ht-create)

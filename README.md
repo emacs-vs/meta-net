@@ -24,7 +24,7 @@
   )
 ```
 
-## API
+## Basic Usage
 
 ##### `meta-net-csproj-current`
 

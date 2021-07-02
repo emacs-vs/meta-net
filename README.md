@@ -7,9 +7,9 @@
 ## :floppy_disk: Quickstart
 
 ```el
-(meta-net-read-project)  ; read and build data in .cs file
+(require 'ht)
 
-(meta-net-solution-names)  ; Return a list of solutions names
+(meta-net-read-project)  ; read and build data in .cs file
 
 (let* ((first-csproj (nth 0 meta-net-csproj-current))  ; Get the first csproj in solution
        (data (ht-get meta-net-csproj first-csproj))

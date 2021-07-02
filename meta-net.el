@@ -7,7 +7,7 @@
 ;; Description: Parse .NET assembly's XML
 ;; Keyword: assembly xml utility
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "24.3") (ht "2.3") (f "0.20.0") (s "1.12.0"))
+;; Package-Requires: ((emacs "25.1") (ht "2.3") (f "0.20.0") (s "1.12.0"))
 ;; URL: https://github.com/emacs-vs/meta-net
 
 ;; This file is NOT part of GNU Emacs.
@@ -259,9 +259,16 @@ Argument DOC-NODE is the root from assembly xml file."
          (ht-set type-data 'events events-data)
          (ht-set type-data 'properties properties-data))
         (method
-         (let ((data (ht-create)) params)
+         (let ((data (ht-create)) (params (xml-get-children member 'param))
+               params-data param-name param-desc)
+           (dolist (param params)
+             (setq param-name (xml-get-attribute param 'name)
+                   param-desc (nth 2 param))
+             (meta-net-debug "  - name: %s" param-name)
+             (meta-net-debug "    desc: %s" param-desc)
+             (push (cons param-name param-desc) params-data))
            (ht-set data 'summary summary)
-           (ht-set data 'params nil)  ; TODO: ..
+           (ht-set data 'params (reverse params-data))
            (ht-set methods-data comp-name data)))
         (field
          (let ((data (ht-create)))
@@ -345,7 +352,9 @@ P.S. Use this carefully, this will overwrite the existing key with null."
   (ht-set meta-net-xml path nil))
 
 (defun meta-net-build-data (&optional force)
-  "Read all csproj files and read all assembly xml files to usable data."
+  "Read all csproj files and read all assembly xml files to usable data.
+
+If argument FORCE is non-nil, clean and rebuild."
   (let ((built t))
     ;; Access csporj to get assembly information including the xml path
     (let ((keys-csproj (ht-keys meta-net-csproj)) result)
@@ -390,7 +399,7 @@ See variable `meta-net-projects' description for argument PROJECT."
     (user-error "CsProj data not found, %s => `%s`" key path)))
 
 (defun meta-net-define-constants (path)
-  "Return define constants from a CSPROJ file."
+  "Return define constants from a csproj PATH file."
   (meta-net--get-csproj path 'constants))
 
 (defun meta-net-csproj-xmls (path)

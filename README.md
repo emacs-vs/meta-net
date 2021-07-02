@@ -24,7 +24,7 @@
   )
 ```
 
-## Basic Usage
+## :hammer: Basic Usage
 
 ##### `meta-net-csproj-current`
 

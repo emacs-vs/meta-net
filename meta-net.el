@@ -301,7 +301,7 @@ You can access these data through variable `meta-net-xml'."
          (doc-node (assq 'doc parse-tree))
          (assembly (car (xml-get-children doc-node 'assembly)))
          data)
-    (when assembly (ht-set result 'assembly assembly))
+    (when assembly (ht-set result 'assembly (or assembly (f-base path))))
     (setq data (meta-net--grab-xml-members doc-node))
     (ht-set result 'data data)
     result))

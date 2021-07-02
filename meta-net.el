@@ -66,7 +66,7 @@ with multiple projects' structure.
 Data look like (path . (csporj_1, csproj_2)).")
 
 (defvar-local meta-net-csproj-current nil
-  "Path that points to current buffer's csporj files.
+  "Parent path of all csproj files under current file.
 
 Please use this variable with variable `meta-net-projects' to get the full
 list of csproj.")
@@ -83,6 +83,9 @@ See function `meta-net--parse-csproj-xml' to get more information.")
 Store data in (path . hash-table); hash-table are data defined in assembly xml.")
 
 (defvar meta-net-show-log t
+  "Show the log message from this package.")
+
+(defvar meta-net-show-debug nil
   "Show the debug message from this package.")
 
 ;;
@@ -90,9 +93,13 @@ Store data in (path . hash-table); hash-table are data defined in assembly xml."
 ;;
 
 (defun meta-net-log (fmt &rest args)
-  "Debug message like function `message' with same argument FMT and ARGS."
+  "Log message like function `message' with same argument FMT and ARGS."
   (when meta-net-show-log
     (let (message-log-max) (apply 'message fmt args))))
+
+(defun meta-net-debug (fmt &rest args)
+  "Debug message like function `message' with same argument FMT and ARGS."
+  (when meta-net-show-debug (apply 'message fmt args)))
 
 (defun meta-net--project-current ()
   "Return the current project root."
@@ -168,25 +175,47 @@ You can access these data through variable `meta-net-csproj'."
     (ht-set result 'xml xml)  ; add `xml' it to data
     result))
 
+(defun meta-net--grab-xml-members (doc-node)
+  "Return members data from assembly xml.
+
+Argument DOC-NODE is the root from assembly xml file."
+  (let* ((result (ht-create))
+         (members-node (car (xml-get-children doc-node 'members)))
+         (members (xml-get-children members-node 'member))
+         name summary-node para summary params)
+    (dolist (member members)
+      (meta-net-debug "\f")
+      (meta-net-debug "%s" member)
+      (setq name (xml-get-attribute member 'name)
+            summary-node (car (xml-get-children member 'summary))
+            summary (nth 2 summary-node)
+            para (nth 3 summary-node))
+      (when para (setq summary (nth 2 para)))
+      (meta-net-debug "---------")
+      (meta-net-debug "name: %s" name)
+      (meta-net-debug "summary-node: %s" summary-node)
+      (meta-net-debug "typeof: %s" (type-of summary))
+      (when summary (setq summary (string-trim summary)))
+      (meta-net-debug "summary: `%s`" summary))
+    result))
+
 (defun meta-net--parse-assembly-xml (path)
   "Parse a assembly (dll) xml from PATH and return data in hash table.
 
 Hash table includes these following keys,
 
-   * type     - TODO
-   * property - TODO
-   * method   - TODO
-   * enum     - TODO
+   * assembly  - Name of the assembly xml
+   * data      - Hash table that use `type` key
 
 You can access these data through variable `meta-net-xml'."
   (let* ((result (ht-create))
          (parse-tree (xml-parse-file path))
          (doc-node (assq 'doc parse-tree))
          (assembly (car (xml-get-children doc-node 'assembly)))
-         (members (xml-get-children doc-node 'members))
-         type property method enum)
+         data)
     (when assembly (ht-set result 'assembly assembly))
-    ;;(jcs-print members)
+    (setq data (meta-net--grab-xml-members doc-node))
+    (ht-set result 'data data)
     result))
 
 ;;;###autoload
@@ -305,9 +334,11 @@ Argument PATH is the csproj path that points to it file."
 Argument PATH is the path points to assembly xml file."
   (meta-net--get-xml path 'assembly))
 
-(defun meta-net-xml-type (path)
-  ""
-  (meta-net--get-xml path 'type))
+(defun meta-net-xml-data (path)
+  "Return the data of the assembly.
+
+Argument PATH is the path points to assembly xml file."
+  (meta-net--get-xml path 'data))
 
 (provide 'meta-net)
 ;;; meta-net.el ends here

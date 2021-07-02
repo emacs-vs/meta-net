@@ -32,7 +32,7 @@ Buffer local variable, stores the id to access current csproj data. Please use i
 with `meta-net-projects` to access the [solution](https://docs.microsoft.com/en-us/visualstudio/ide/solutions-and-projects-in-visual-studio?view=vs-2019)
 data.
 
-#####  `(meta-net-csproj-files)`
+#####  `(meta-net-csproj-files &optional PROJECT)`
 
 Return a list of csporj files
 

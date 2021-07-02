@@ -44,6 +44,10 @@ Return a list of csporj names
 
 Get a list of define constants from a csproj file.
 
+## References
+
+* [The XML Documentation File](https://docs.microsoft.com/en-us/archive/msdn-magazine/2019/october/csharp-accessing-xml-documentation-via-reflection)
+
 ## Contribution
 
 If you would like to contribute to this project, you may either

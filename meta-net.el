@@ -44,16 +44,19 @@
   :link '(url-link :tag "Repository" "https://github.com/emacs-vs/meta-net"))
 
 (defconst meta-net--tag-property "P:"
-  "Tag represent property declaration.")
+  "Tag represent properties declaration.")
 
 (defconst meta-net--tag-method "M:"
-  "Tag represent method/function declaration.")
+  "Tag represent methods declaration.")
 
 (defconst meta-net--tag-type "T:"
-  "Tag represent type (enum, class, interface) declaration.")
+  "Tag represent types (enum, class, interface) declaration.")
 
-(defconst meta-net--tag-enum "F:"
-  "Tag represent enum item.")
+(defconst meta-net--tag-fields "F:"
+  "Tag represent fields.")
+
+(defconst meta-net--tag-events "F:"
+  "Tag represent events.")
 
 (defvar meta-net-projects (ht-create)
   "Store all the project points to csporj files.
@@ -182,6 +185,8 @@ Argument DOC-NODE is the root from assembly xml file."
   (let* ((result (ht-create))
          (members-node (car (xml-get-children doc-node 'members)))
          (members (xml-get-children members-node 'member))
+         type-name  ; we use this as a key
+         type-data  ; this as a data from type-name
          name summary-node para summary params)
     (dolist (member members)
       (meta-net-debug "\f")
@@ -191,12 +196,19 @@ Argument DOC-NODE is the root from assembly xml file."
             summary (nth 2 summary-node)
             para (nth 3 summary-node))
       (when para (setq summary (nth 2 para)))
+      (when summary (setq summary (string-trim summary)))
       (meta-net-debug "---------")
       (meta-net-debug "name: %s" name)
-      (meta-net-debug "summary-node: %s" summary-node)
-      (meta-net-debug "typeof: %s" (type-of summary))
-      (when summary (setq summary (string-trim summary)))
-      (meta-net-debug "summary: `%s`" summary))
+      (meta-net-debug "summary: `%s`" summary)
+      (cond ((string-match-p meta-net--tag-type name)
+             (setq type-name (s-replace meta-net--tag-type "" name)
+                   type-data (ht-create))
+             (ht-set result type-name type-data))
+            ((string-match-p meta-net--tag-method name)
+             (ht-set type-data 'method )
+             )
+            )
+      )
     result))
 
 (defun meta-net--parse-assembly-xml (path)

@@ -7,7 +7,7 @@
 ;; Description: Parse .NET assembly's XML
 ;; Keyword: assembly xml utility
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "24.3") (ht "2.3") (f "0.20.0"))
+;; Package-Requires: ((emacs "24.3") (ht "2.3") (f "0.20.0") (s "1.12.0"))
 ;; URL: https://github.com/emacs-vs/meta-net
 
 ;; This file is NOT part of GNU Emacs.
@@ -32,10 +32,13 @@
 
 ;;; Code:
 
-(require 'f)
-(require 'ht)
+(require 'cl-lib)
 (require 'xml)
 (require 'subr-x)
+
+(require 's)
+(require 'f)
+(require 'ht)
 
 (defgroup meta-net nil
   "Parse .NET assembly's XML."
@@ -43,19 +46,19 @@
   :group 'tool
   :link '(url-link :tag "Repository" "https://github.com/emacs-vs/meta-net"))
 
-(defconst meta-net--tag-property "P:"
-  "Tag represent properties declaration.")
-
 (defconst meta-net--tag-method "M:"
   "Tag represent methods declaration.")
 
 (defconst meta-net--tag-type "T:"
   "Tag represent types (enum, class, interface) declaration.")
 
-(defconst meta-net--tag-fields "F:"
+(defconst meta-net--tag-field "F:"
   "Tag represent fields.")
 
-(defconst meta-net--tag-events "E:"
+(defconst meta-net--tag-property "P:"
+  "Tag represent properties declaration.")
+
+(defconst meta-net--tag-event "E:"
   "Tag represent events.")
 
 (defvar meta-net-projects (ht-create)
@@ -178,6 +181,32 @@ You can access these data through variable `meta-net-csproj'."
     (ht-set result 'xml xml)  ; add `xml' it to data
     result))
 
+(defun meta-net--find-tag (name)
+  "Find the tag from NAME."
+  (cond ((string-match-p meta-net--tag-type name)     'type)
+        ((string-match-p meta-net--tag-method name)   'method)
+        ((string-match-p meta-net--tag-field name)    'filed)
+        ((string-match-p meta-net--tag-event name)    'event)
+        ((string-match-p meta-net--tag-property name) 'property)
+        (t nil)))
+
+(defun meta-net--find-tag-string (name)
+  "Find the tag string from NAME.
+
+The value should be one of the follwin string, M:/T:/F:/P:/E:."
+  (cl-case (meta-net--find-tag name)
+    (type     meta-net--tag-type)
+    (method   meta-net--tag-method)
+    (field    meta-net--tag-field)
+    (event    meta-net--tag-event)
+    (property meta-net--tag-property)))
+
+(defun meta-net--rip-tag-name (name)
+  "Rip off the tag from NAME.
+
+For instnace, name `T:some-value` to `some-value`."
+  (s-replace (meta-net--find-tag-string name) "" name))
+
 (defun meta-net--grab-xml-members (doc-node)
   "Return members data from assembly xml.
 
@@ -185,13 +214,17 @@ Argument DOC-NODE is the root from assembly xml file."
   (let* ((result (ht-create))
          (members-node (car (xml-get-children doc-node 'members)))
          (members (xml-get-children members-node 'member))
+         name-no-tag  ; name without the tag
          type-name  ; we use this as a key
          type-data  ; this as a data from type-name
+         tag
          name summary-node para summary params)
     (dolist (member members)
       (meta-net-debug "\f")
       (meta-net-debug "%s" member)
       (setq name (xml-get-attribute member 'name)
+            tag (meta-net--find-tag name)
+            name-no-tag (meta-net--rip-tag-name name)
             summary-node (car (xml-get-children member 'summary))
             summary (nth 2 summary-node)
             para (nth 3 summary-node))
@@ -200,16 +233,23 @@ Argument DOC-NODE is the root from assembly xml file."
       (meta-net-debug "---------")
       (meta-net-debug "name: %s" name)
       (meta-net-debug "summary: `%s`" summary)
-      ;; TODO: ..
-      (cond ((string-match-p meta-net--tag-type name)
-             (setq type-name (s-replace meta-net--tag-type "" name)
-                   type-data (ht-create))
-             (ht-set result type-name type-data))
-            ((string-match-p meta-net--tag-method name)
-             (ht-set type-data 'method )
-             )
-            )
-      )
+      (cl-case (meta-net--find-tag name)
+        (type
+         (setq type-name name-no-tag
+               type-data (ht-create))
+         (ht-set result type-name type-data))
+        (method
+         ;; TODO: ..
+         (ht-set type-data 'method ))
+        (field
+         ;; TODO: ..
+         )
+        (event
+         ;; TODO: ..
+         )
+        (property
+         ;; TODO: ..
+         )))
     result))
 
 (defun meta-net--parse-assembly-xml (path)

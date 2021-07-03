@@ -139,12 +139,13 @@ Argument START-PATH should be sub directory from PATH."
 
 Argument PROJECT-NODE is the root node from a csproj file."
   (let ((project-groups (xml-get-children project-node 'PropertyGroup))
-        constants)
+        constants current)
     (dolist (project-group project-groups)
-      (setq constants (car (xml-get-children project-group 'DefineConstants)))
-      (when constants
-        (setq constants (nth 2 constants)
-              constants (split-string constants ";"))))
+      (setq current (car (xml-get-children project-group 'DefineConstants)))
+      (when current
+        (setq current (nth 2 current)
+              current (split-string current ";")
+              constants (append constants current))))
     constants))
 
 (defun meta-net--grab-assembly-xml (project-node)

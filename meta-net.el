@@ -213,14 +213,20 @@ The value should be one of the follwin string, M:/T:/F:/P:/E:."
 For instnace, name `T:some-value` to `some-value`."
   (s-replace (meta-net--find-tag-string name) "" name))
 
-(defun meta-net--subset-data (hashtable comp-name data)
+(defun meta-net--subset-data (hashtable comp-name data tag)
   "Update the subset data.
 
-Argument HASHTABLE is the root of parent node.  Arguments COMP-NAME and DATA
-are pair data, in key and value."
+Argument HASHTABLE is the root of parent node.  Arguments COMP-NAME and
+DATA are pair data, in key and value.  Argument TAG is a symbol represents
+the prefix name."
   (if (hash-table-p hashtable) (ht-set hashtable comp-name data)
-    (message "Error building tree, parent missing in assembly xml: %s"
-             comp-name)))
+    ;; Variable HASHTABLE is created inside `meta-net--grab-xml-members'
+    ;; function; if it's missing, means there is invalid prefix ?: in the
+    ;; xml document.
+    ;;
+    ;; You can often ignore this error, unless it appears multiple times
+    ;; in a xml file.
+    (message "[WARNING] Parent missing in assembly xml `%s`: %s" tag comp-name)))
 
 (defun meta-net--grab-xml-members (doc-node)
   "Return members data from assembly xml.
@@ -285,19 +291,19 @@ Argument DOC-NODE is the root from assembly xml file."
            (ht-set data 'summary summary)
            (ht-set data 'params (reverse params-data))
            (ht-set data 'returns returns-desc)
-           (meta-net--subset-data methods-data comp-name data)))
+           (meta-net--subset-data methods-data comp-name data tag)))
         (field
          (let ((data (ht-create)))
            (ht-set data 'summary summary)
-           (meta-net--subset-data fields-data comp-name data)))
+           (meta-net--subset-data fields-data comp-name data tag)))
         (event
          (let ((data (ht-create)))
            (ht-set data 'summary summary)
-           (meta-net--subset-data events-data comp-name data)))
+           (meta-net--subset-data events-data comp-name data tag)))
         (property
          (let ((data (ht-create)))
            (ht-set data 'summary summary)
-           (meta-net--subset-data properties-data comp-name data)))
+           (meta-net--subset-data properties-data comp-name data tag)))
         (unknown
          ;; TODO: What should we do for unknown tag?
          (meta-net-debug "Detect unkown tag `%s`, name `%s`" meta-net--tag-unknown name-no-tag))))

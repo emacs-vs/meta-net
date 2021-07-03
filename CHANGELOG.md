@@ -8,7 +8,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## 1.1.0 (Unreleased)
 > Released N/A
 
-* N/A
+* Add debug message for missing parent type
 
 ## 1.0.0
 > Released Jul 03, 2021

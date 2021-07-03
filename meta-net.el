@@ -165,7 +165,7 @@ Argument PROJECT-NODE is the root node from a csproj file."
         (when (file-exists-p hint-path)  ; file must exists
           (meta-net-create-entry-xml hint-path)
           (push hint-path xml))))
-    xml))
+    (reverse xml)))
 
 (defun meta-net--parse-csproj-xml (path)
   "Parse a csproj xml from PATH and return data in hash table.

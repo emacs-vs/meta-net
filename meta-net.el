@@ -204,13 +204,23 @@ The value should be one of the follwin string, M:/T:/F:/P:/E:."
     (field    meta-net--tag-field)
     (event    meta-net--tag-event)
     (property meta-net--tag-property)
-    (unknown  meta-net--tag-unknown)))
+    (unknown  meta-net--tag-unknown)
+    (t "")))
 
 (defun meta-net--rip-tag-name (name)
   "Rip off the tag from NAME.
 
 For instnace, name `T:some-value` to `some-value`."
   (s-replace (meta-net--find-tag-string name) "" name))
+
+(defun meta-net--subset-data (hashtable comp-name data)
+  "Update the subset data.
+
+Argument HASHTABLE is the root of parent node.  Arguments COMP-NAME and DATA
+are pair data, in key and value."
+  (if (hash-table-p hashtable) (ht-set hashtable comp-name data)
+    (message "Error building tree, parent missing in assembly xml: %s"
+             comp-name)))
 
 (defun meta-net--grab-xml-members (doc-node)
   "Return members data from assembly xml.
@@ -248,7 +258,7 @@ Argument DOC-NODE is the root from assembly xml file."
       (meta-net-debug "name: %s" name)
       (meta-net-debug "summary: `%s`" summary)
       (cl-case tag
-        (type
+        (type  ; Type is the root of the tree
          (setq type-name name-no-tag
                type-data (ht-create)
                methods-data (ht-create) fields-data (ht-create)
@@ -259,29 +269,35 @@ Argument DOC-NODE is the root from assembly xml file."
          (ht-set type-data 'events events-data)
          (ht-set type-data 'properties properties-data))
         (method
-         (let ((data (ht-create)) (params (xml-get-children member 'param))
-               params-data param-name param-desc)
+         (let* ((data (ht-create)) (params (xml-get-children member 'param))
+                params-data param-name param-desc
+                (returns-node (car (xml-get-children member 'returns)))
+                (returns-desc (nth 2 returns-node))
+                (returns-para (nth 3 returns-node)))
+           (when returns-para (setq returns-desc (nth 2 returns-para)))
            (dolist (param params)
              (setq param-name (xml-get-attribute param 'name)
                    param-desc (nth 2 param))
-             (meta-net-debug "  - name: %s" param-name)
-             (meta-net-debug "    desc: %s" param-desc)
+             (meta-net-debug "  - name:   %s" param-name)
+             (meta-net-debug "    desc:   %s" param-desc)
+             (meta-net-debug "    return: %s" returns-desc)
              (push (cons param-name param-desc) params-data))
            (ht-set data 'summary summary)
            (ht-set data 'params (reverse params-data))
-           (ht-set methods-data comp-name data)))
+           (ht-set data 'returns returns-desc)
+           (meta-net--subset-data methods-data comp-name data)))
         (field
          (let ((data (ht-create)))
            (ht-set data 'summary summary)
-           (ht-set fields-data comp-name data)))
+           (meta-net--subset-data fields-data comp-name data)))
         (event
          (let ((data (ht-create)))
            (ht-set data 'summary summary)
-           (ht-set events-data comp-name data)))
+           (meta-net--subset-data events-data comp-name data)))
         (property
          (let ((data (ht-create)))
            (ht-set data 'summary summary)
-           (ht-set properties-data comp-name data)))
+           (meta-net--subset-data properties-data comp-name data)))
         (unknown
          ;; TODO: What should we do for unknown tag?
          (meta-net-debug "Detect unkown tag `%s`, name `%s`" meta-net--tag-unknown name-no-tag))))

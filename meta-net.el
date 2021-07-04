@@ -515,37 +515,5 @@ See function `meta-net--type-data-get' for arguments XML and TYPE."
 See function `meta-net--type-data-get' for arguments XML and TYPE."
   (meta-net--type-data-get xml type 'summary))
 
-(defun meta-net--summary (xml type key)
-  "Return summary from TYPE data.
-
-Information for arguments XML and KEY, please see function
-`meta-net--type-data-get' description."
-  (let ((data (meta-net--type-data-get xml type key)))
-    (ht-get data 'summary)))
-
-(defun meta-net-method-summary (xml type)
-  "Return method summary.
-
-See function `meta-net--type-data-get' for arguments XML and TYPE."
-  (meta-net--summary xml type 'methods))
-
-(defun meta-net-field-summary (xml type)
-  "Return field summary.
-
-See function `meta-net--type-data-get' for arguments XML and TYPE."
-  (meta-net--summary xml type 'events))
-
-(defun meta-net-event-summary (xml type)
-  "Return event summary.
-
-See function `meta-net--type-data-get' for arguments XML and TYPE."
-  (meta-net--summary xml type 'events))
-
-(defun meta-net-property-summary (xml type)
-  "Return property summary.
-
-See function `meta-net--type-data-get' for arguments XML and TYPE."
-  (meta-net--summary xml type 'properties))
-
 (provide 'meta-net)
 ;;; meta-net.el ends here

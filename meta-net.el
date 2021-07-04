@@ -271,6 +271,7 @@ Argument DOC-NODE is the root from assembly xml file."
                methods-data (ht-create) fields-data (ht-create)
                events-data (ht-create) properties-data (ht-create))
          (ht-set result type-name type-data)
+         (ht-set type-data 'summary summary)
          (ht-set type-data 'methods methods-data)
          (ht-set type-data 'fields fields-data)
          (ht-set type-data 'events events-data)
@@ -383,6 +384,7 @@ If argument FORCE is non-nil, clean and rebuild."
     (let ((keys-csproj (ht-keys meta-net-csproj)) result)
       (dolist (key keys-csproj)                              ; key, is csporj path
         (when (or force (not (ht-get meta-net-csproj key)))  ; if it hasn't build, build it
+          (meta-net-log "Build csproj data: `%s`" key)
           (setq result (meta-net--parse-csproj-xml key))     ; start building data
           (ht-set meta-net-csproj key result)
           (setq built nil))))
@@ -390,6 +392,7 @@ If argument FORCE is non-nil, clean and rebuild."
     (let ((keys-xml (ht-keys meta-net-xml)) result)
       (dolist (key keys-xml)                                ; key, is xml path
         (when (or force (not (ht-get meta-net-xml key)))    ; if it hasn't build, build it
+          (meta-net-log "Build assembly xml data: `%s`" key)
           (setq result (meta-net--parse-assembly-xml key))  ; start building data
           (ht-set meta-net-xml key result)
           (setq built nil))))
@@ -452,6 +455,97 @@ Argument PATH is the path points to assembly xml file."
 
 Argument PATH is the path points to assembly xml file."
   (meta-net--get-xml path 'data))
+
+;;
+;; (@* "Types Data" )
+;;
+
+(defun meta-net-xml-types (xml)
+  "Return all types from assembly XML."
+  (if-let ((data (meta-net-xml-data xml)))
+      (ht-keys data)
+    (user-error "Xml not found, %s" xml)))
+
+(defun meta-net--type-get (xml type)
+  "Return TYPE data from assembly XML in hash table."
+  (if-let ((data (meta-net-xml-data xml)))
+      (ht-get data type)
+    (user-error "Assembly type not found, %s" type)))
+
+(defun meta-net--type-data-get (xml type key)
+  "Return TYPE data from assembly XML.
+
+Argument XML is it's path, and TYPE is the type data fomr the assembly xml.
+
+Argument KEY should be one of the tag, `methods`, `fields`, etc."
+  (when-let ((data (meta-net--type-get xml type)))
+    (ht-get data key)))
+
+(defun meta-net-type-methods (xml type)
+  "Return all methods (hashtable) data.
+
+See function `meta-net--type-data-get' for arguments XML and TYPE."
+  (meta-net--type-data-get xml type 'methods))
+
+(defun meta-net-type-fields (xml type)
+  "Return all fields (hashtable) data.
+
+See function `meta-net--type-data-get' for arguments XML and TYPE."
+  (meta-net--type-data-get xml type 'fields))
+
+(defun meta-net-type-events (xml type)
+  "Return all events (hashtable) data.
+
+See function `meta-net--type-data-get' for arguments XML and TYPE."
+  (meta-net--type-data-get xml type 'events))
+
+(defun meta-net-type-properties (xml type)
+  "Return all properties (hashtable) data.
+
+See function `meta-net--type-data-get' for arguments XML and TYPE."
+  (meta-net--type-data-get xml type 'properties))
+
+;;
+;; (@* "Tags Data" )
+;;
+
+(defun meta-net-type-summary (xml type)
+  "Return summary from TYPE.
+
+See function `meta-net--type-data-get' for arguments XML and TYPE."
+  (meta-net--type-data-get xml type 'summary))
+
+(defun meta-net--summary (xml type key)
+  "Return summary from TYPE data.
+
+Information for arguments XML and KEY, please see function
+`meta-net--type-data-get' description."
+  (let ((data (meta-net--type-data-get xml type key)))
+    (ht-get data 'summary)))
+
+(defun meta-net-method-summary (xml type)
+  "Return method summary.
+
+See function `meta-net--type-data-get' for arguments XML and TYPE."
+  (meta-net--summary xml type 'methods))
+
+(defun meta-net-field-summary (xml type)
+  "Return field summary.
+
+See function `meta-net--type-data-get' for arguments XML and TYPE."
+  (meta-net--summary xml type 'events))
+
+(defun meta-net-event-summary (xml type)
+  "Return event summary.
+
+See function `meta-net--type-data-get' for arguments XML and TYPE."
+  (meta-net--summary xml type 'events))
+
+(defun meta-net-property-summary (xml type)
+  "Return property summary.
+
+See function `meta-net--type-data-get' for arguments XML and TYPE."
+  (meta-net--summary xml type 'properties))
 
 (provide 'meta-net)
 ;;; meta-net.el ends here

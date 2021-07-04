@@ -12,7 +12,7 @@
 (meta-net-read-project)  ; read and build data in .cs file
 
 (let* ((first-csproj (nth 0 meta-net-csproj-current))  ; Get the first csproj in solution
-       (data (ht-get meta-net-csproj first-csproj))
+       (data (ht-get meta-net-csproj first-csproj))    ; Get the target csproj data
        xml first-xml)
 
   (ht-get data 'constants)         ; Constants defined in this C# project

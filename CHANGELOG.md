@@ -9,6 +9,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 > Released N/A
 
 * Add debug message for missing parent type
+* Add build information messages, `csproj` and `assembly xml`
 
 ## 1.0.0
 > Released Jul 03, 2021

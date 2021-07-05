@@ -12,11 +12,11 @@
 (meta-net-read-project)  ; read and build data in .cs file
 
 (let* ((project meta-net-csproj-current)
-         (csprojs (meta-net-csproj-files project))   ; List of csproj files under project
-         (first-csproj (nth 0 csprojs))              ; Pick the first csproj file
-         (xmls (meta-net-csproj-xmls first-csproj))  ; Get all xml files under a csproj
-         (first-xml (nth 1 xmls))                    ; Pick the first xml file
-         )
+       (csprojs (meta-net-csproj-files project))   ; List of csproj files under project
+       (first-csproj (nth 0 csprojs))              ; Pick the first csproj file
+       (xmls (meta-net-csproj-xmls first-csproj))  ; Get all xml files under a csproj
+       (first-xml (nth 1 xmls))                    ; Pick the first xml file
+       )
     (message "%s" (meta-net-xml-types first-xml))  ; print out all types from assembly xml
     )
 ```

@@ -214,13 +214,6 @@ The value should be one of the follwin string, M:/T:/F:/P:/E:."
 For instnace, name `T:some-value` to `some-value`."
   (s-replace (meta-net--find-tag-string name) "" name))
 
-(defun meta-net--name-prefix (name)
-  "Remove the last NAME space and return it.
-
-For instance, `Hello.And.World` will convert to `Hello.And`."
-  (let ((splits (butlast (split-string name "\\."))))
-    (s-join "." splits)))
-
 (defun meta-net--subset-data (hashtable comp-name data tag)
   "Update the subset data.
 
@@ -245,7 +238,6 @@ Argument DOC-NODE is the root from assembly xml file."
          (members (xml-get-children members-node 'member))
          tag            ; current tag
          name-no-tag    ; name without the tag
-         comp-prefix    ; everything infront of the component's name
          comp-name      ; actual name of the component after `.` (last)
          type-name      ; we use this as a key
          type-data      ; data from current `type`
@@ -263,8 +255,7 @@ Argument DOC-NODE is the root from assembly xml file."
       (setq name (xml-get-attribute member 'name)
             tag (meta-net--find-tag name)
             name-no-tag (meta-net--rip-tag-name name)
-            comp-prefix (meta-net--name-prefix name-no-tag)
-            comp-name (s-replace (concat comp-prefix ".") "" name-no-tag)
+            comp-name (s-replace (concat (or type-name "") ".") "" name-no-tag)
             summary-node (car (xml-get-children member 'summary))
             summary (nth 2 summary-node)
             para (nth 3 summary-node))

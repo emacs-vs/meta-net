@@ -65,14 +65,14 @@
   "Tag represent unknown.")
 
 (defvar meta-net-projects (ht-create)
-  "Store all the project points to csporj files.
+  "Store all the project points to csproj files.
 
 This prevents reading the same project and waste it's performance.  Notice
 project path here aren't source control path.  It's just the parent path of
 all .csproj file so this will work without the source control or one repository
 with multiple projects' structure.
 
-Data look like (path . (csporj_1, csproj_2)).")
+Data look like (path . (csproj_1, csproj_2)).")
 
 (defvar-local meta-net-csproj-current nil
   "Parent path of all csproj files under current file.
@@ -83,7 +83,7 @@ list of csproj.")
 (defvar meta-net-csproj (ht-create)
   "Mapping of all csproj file entries.
 
-Store data in (path . hash-table); hash-table are data defined in csporj.
+Store data in (path . hash-table); hash-table are data defined in csproj.
 See function `meta-net--parse-csproj-xml' to get more information.")
 
 (defvar meta-net-xml (ht-create)
@@ -346,7 +346,7 @@ P.S. Please call the function under a project."
         (meta-net--walk-path
          path
          (lambda (current)  ; current is the path of walking path
-           (setq csprojs (ht-get meta-net-projects current))  ; get csporj files if already exists
+           (setq csprojs (ht-get meta-net-projects current))  ; get csproj files if already exists
            ;; if exists, we don't need to read it again
            (if (and csprojs (not force))  ; if force, we need to refresh it
                (setq meta-net-csproj-current current)  ; records the key (current)
@@ -354,18 +354,18 @@ P.S. Please call the function under a project."
              (when csprojs  ; found csproj files in `current' directory
                (setq meta-net-csproj-current current)  ; record it's key
                (ht-set meta-net-projects current csprojs)
-               (meta-net-create-entry-csporj csprojs))))
+               (meta-net-create-entry-csproj csprojs))))
          project)))
     (meta-net-build-data force)))
 
-(defun meta-net-create-entry-csporj (csprojs)
+(defun meta-net-create-entry-csproj (csprojs)
   "Create new csproj entry from current buffer.
 
-Argument CSPROJS is a list of csporj files for use to create.
+Argument CSPROJS is a list of csproj files for use to create.
 
 P.S. Use this carefully, this will overwrite the existing key with null."
   (dolist (entry csprojs)
-    (meta-net-log "Create csporj entry: `%s`" entry)
+    (meta-net-log "Create csproj entry: `%s`" entry)
     (ht-set meta-net-csproj entry nil)))
 
 (defun meta-net-create-entry-xml (path)
@@ -380,9 +380,9 @@ P.S. Use this carefully, this will overwrite the existing key with null."
 
 If argument FORCE is non-nil, clean and rebuild."
   (let ((built t))
-    ;; Access csporj to get assembly information including the xml path
+    ;; Access csproj to get assembly information including the xml path
     (let ((keys-csproj (ht-keys meta-net-csproj)) result)
-      (dolist (key keys-csproj)                              ; key, is csporj path
+      (dolist (key keys-csproj)                              ; key, is csproj path
         (when (or force (not (ht-get meta-net-csproj key)))  ; if it hasn't build, build it
           (meta-net-log "Build csproj data: `%s`" key)
           (setq result (meta-net--parse-csproj-xml key))     ; start building data
@@ -403,8 +403,8 @@ If argument FORCE is non-nil, clean and rebuild."
 ;; (@* "CsProj" )
 ;;
 
-(defun meta-net-csporj-files (&optional project)
-  "Return a list of csporj files.
+(defun meta-net-csproj-files (&optional project)
+  "Return a list of csproj files.
 
 See variable `meta-net-projects' description for argument PROJECT."
   (ht-get meta-net-projects (or project meta-net-csproj-current)))
@@ -414,7 +414,7 @@ See variable `meta-net-projects' description for argument PROJECT."
 
 See variable `meta-net-projects' description for argument PROJECT."
   (let (solutions)
-    (dolist (path (meta-net-csporj-files project))
+    (dolist (path (meta-net-csproj-files project))
       (push (f-base path) solutions))
     (reverse solutions)))
 

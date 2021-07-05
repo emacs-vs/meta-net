@@ -21,6 +21,9 @@
     )
 ```
 
+All data are in `hash-table`, I would recommend you use library [ht](https://github.com/Wilfred/ht.el)
+so you can access the data easily.
+
 ## :hammer: Basic Usage
 
 ##### `meta-net-csproj-current`

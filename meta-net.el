@@ -189,7 +189,7 @@ You can access these data through variable `meta-net-csproj'."
   "Find the tag from NAME."
   (cond ((string-match-p meta-net--tag-type name)     'type)
         ((string-match-p meta-net--tag-method name)   'method)
-        ((string-match-p meta-net--tag-field name)    'filed)
+        ((string-match-p meta-net--tag-field name)    'field)
         ((string-match-p meta-net--tag-event name)    'event)
         ((string-match-p meta-net--tag-property name) 'property)
         ((string-match-p meta-net--tag-unknown name)  'unknown)

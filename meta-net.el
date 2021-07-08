@@ -64,21 +64,10 @@
 (defconst meta-net--tag-unknown "?:"
   "Tag represent unknown.")
 
-(defvar meta-net-projects (ht-create)
-  "Store all the project points to csproj files.
-
-This prevents reading the same project and waste it's performance.  Notice
-project path here aren't source control path.  It's just the parent path of
-all .csproj file so this will work without the source control or one repository
-with multiple projects' structure.
-
-Data look like (path . (csproj_1, csproj_2)).")
-
 (defvar-local meta-net-csproj-current nil
-  "Parent path of all csproj files under current file.
+  "File path points to current csproj file.
 
-Please use this variable with variable `meta-net-projects' to get the full
-list of csproj.")
+Do not modified this buffer, unless you have to.")
 
 (defvar meta-net-csproj (ht-create)
   "Mapping of all csproj file entries.
@@ -137,7 +126,7 @@ Argument START-PATH should be sub directory from PATH."
 (defun meta-net--grab-define-constants (project-node)
   "Return list of string that are define constants.
 
-Argument PROJECT-NODE is the root node from a csproj file."
+See the caller function `meta-net--parse-csproj-xml' for argument PROJECT-NODE."
   (let ((project-groups (xml-get-children project-node 'PropertyGroup))
         constants current)
     (dolist (project-group project-groups)
@@ -148,10 +137,25 @@ Argument PROJECT-NODE is the root node from a csproj file."
               constants (append constants current))))
     constants))
 
-(defun meta-net--grab-assembly-xml (project-node)
+(defun meta-net--grab-includes (project-node project)
+  "Return a list of path are are project source files.
+
+See the caller function `meta-net--parse-csproj-xml' for arguments PROJECT-NODE
+and PROJECT."
+  (let ((item-groups (xml-get-children project-node 'ItemGroup))
+        includes compiles attr-include)
+    (dolist (item-group item-groups)
+      (setq compiles (xml-get-children item-group 'Compile))
+      (dolist (compile compiles)
+        (setq attr-include (xml-get-attribute compile 'Include))  ; this is the source path
+        (push (f-join project attr-include) includes)))
+    (reverse includes)))
+
+(defun meta-net--grab-assembly-xml (project-node project)
   "Return a list of path that are assembly xml.
 
-Argument PROJECT-NODE is the root node from a csproj file."
+See the caller function `meta-net--parse-csproj-xml' for arguments PROJECT-NODE
+and PROJECT."
   (let ((item-groups (xml-get-children project-node 'ItemGroup))
         refs hint-path attr-include xml)
     (dolist (item-group item-groups)
@@ -160,7 +164,7 @@ Argument PROJECT-NODE is the root node from a csproj file."
         (setq attr-include (xml-get-attribute ref 'Include)
               hint-path (nth 2 (car (xml-get-children ref 'HintPath))))
         (unless (file-exists-p hint-path)  ; Convert relative path to absolute path
-          (setq hint-path (f-join (meta-net--project-current) hint-path)))
+          (setq hint-path (f-join project hint-path)))
         (setq hint-path (f-swap-ext hint-path "xml"))
         (when (file-exists-p hint-path)  ; file must exists
           (meta-net-create-entry-xml hint-path)
@@ -173,16 +177,20 @@ Argument PROJECT-NODE is the root node from a csproj file."
 Hash table includes these following keys,
 
    * constants - A list of define constans
+   * includes  - A list of included source file
    * xml       - A list of assembly xml path
 
 You can access these data through variable `meta-net-csproj'."
   (let* ((result (ht-create)) (parse-tree (xml-parse-file path))
          (project-node (assq 'Project parse-tree))
-         constants xml)
-    (setq constants (meta-net--grab-define-constants project-node))
+         (project (f-parent path))
+         constants includes xml)
+    (setq constants (meta-net--grab-define-constants project-node)
+          includes (meta-net--grab-includes project-node project)
+          xml (meta-net--grab-assembly-xml project-node project))
     (ht-set result 'constants constants)  ; add `constants' it to data
-    (setq xml (meta-net--grab-assembly-xml project-node))
-    (ht-set result 'xml xml)  ; add `xml' it to data
+    (ht-set result 'includes includes)    ; add `includes' it to data
+    (ht-set result 'xml xml)              ; add `xml' it to data
     result))
 
 (defun meta-net--find-tag (name)
@@ -345,16 +353,10 @@ P.S. Please call the function under a project."
       (if (not project) (user-error "Path is not under project root: %s" path)
         (meta-net--walk-path
          path
-         (lambda (current)  ; current is the path of walking path
-           (setq csprojs (ht-get meta-net-projects current))  ; get csproj files if already exists
-           ;; if exists, we don't need to read it again
-           (if (and csprojs (not force))  ; if force, we need to refresh it
-               (setq meta-net-csproj-current current)  ; records the key (current)
-             (setq csprojs (f--files current (equal (f-ext it) "csproj")))
-             (when csprojs  ; found csproj files in `current' directory
-               (setq meta-net-csproj-current current)  ; record it's key
-               (ht-set meta-net-projects current csprojs)
-               (meta-net-create-entry-csproj csprojs))))
+         (lambda (current)  ; `current` is the path of walking path
+           (setq csprojs (f--files current (equal (f-ext it) "csproj")))
+           (when csprojs  ; found csproj files in `current' directory
+             (meta-net-create-entry-csproj csprojs)))
          project)))
     (meta-net-build-data force)))
 
@@ -375,6 +377,25 @@ P.S. Use this carefully, this will overwrite the existing key with null."
   (meta-net-log "Create xml entry: `%s`" path)
   (ht-set meta-net-xml path nil))
 
+(defun meta-net--find-current-csproj ()
+  "Return a csproj path that includes the current buffer file."
+  (let ((csprojs (ht-keys meta-net-csproj)) csproj (csproj-index 0)
+        sources source source-index
+        (target (buffer-file-name)) target-csproj
+        break)
+    (while (and (not break) (< csproj-index (length csprojs)))
+      (setq csproj (nth csproj-index csprojs)
+            csproj-index (1+ csproj-index)
+            sources (meta-net-includes csproj)
+            source-index 0)
+      (while (and (not break) (< source-index (length sources)))
+        (setq source (nth source-index sources)
+              source-index (1+ source-index))
+        (when (string= target source)
+          (setq target-csproj csproj
+                break t))))
+    target-csproj))
+
 (defun meta-net-build-data (&optional force)
   "Read all csproj files and read all assembly xml files to usable data.
 
@@ -388,6 +409,8 @@ If argument FORCE is non-nil, clean and rebuild."
           (setq result (meta-net--parse-csproj-xml key))     ; start building data
           (ht-set meta-net-csproj key result)
           (setq built nil))))
+    ;; Find csproj for current buffer file
+    (setq meta-net-csproj-current (meta-net--find-current-csproj))
     ;; Build assembly xml data to cache
     (let ((keys-xml (ht-keys meta-net-xml)) result)
       (dolist (key keys-xml)                                ; key, is xml path
@@ -403,21 +426,6 @@ If argument FORCE is non-nil, clean and rebuild."
 ;; (@* "CsProj" )
 ;;
 
-(defun meta-net-csproj-files (&optional project)
-  "Return a list of csproj files.
-
-See variable `meta-net-projects' description for argument PROJECT."
-  (ht-get meta-net-projects (or project meta-net-csproj-current)))
-
-(defun meta-net-csproj-names (&optional project)
-  "Return a list of csproj names.
-
-See variable `meta-net-projects' description for argument PROJECT."
-  (let (solutions)
-    (dolist (path (meta-net-csproj-files project))
-      (push (f-base path) solutions))
-    (reverse solutions)))
-
 (defun meta-net--get-csproj (path key)
   "Return csproj data by it's PATH with KEY."
   (if-let ((data (ht-get meta-net-csproj path)))
@@ -427,6 +435,10 @@ See variable `meta-net-projects' description for argument PROJECT."
 (defun meta-net-define-constants (path)
   "Return define constants from a csproj PATH file."
   (meta-net--get-csproj path 'constants))
+
+(defun meta-net-includes (path)
+  "Return includes source file from a csproj PATH file."
+  (meta-net--get-csproj path 'includes))
 
 (defun meta-net-csproj-xmls (path)
   "Return list of assembly xml files.

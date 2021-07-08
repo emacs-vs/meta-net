@@ -365,12 +365,11 @@ P.S. Please call the function under a project."
 (defun meta-net-create-entry-csproj (csprojs)
   "Create new csproj entry from current buffer.
 
-Argument CSPROJS is a list of csproj files for use to create.
-
-P.S. Use this carefully, this will overwrite the existing key with null."
+Argument CSPROJS is a list of csproj files for use to create."
   (dolist (entry csprojs)
-    (meta-net-log "Create csproj entry: `%s`" entry)
-    (ht-set meta-net-csproj entry nil)))
+    (unless (ht-get meta-net-csproj entry)
+      (meta-net-log "Create csproj entry: `%s`" entry)
+      (ht-set meta-net-csproj entry nil))))
 
 (defun meta-net-create-entry-xml (path)
   "Create new xml entry (PATH) from current buffer.

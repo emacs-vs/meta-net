@@ -67,6 +67,8 @@
 (defvar-local meta-net-csproj-current nil
   "File path points to current csproj file.
 
+Please use this with variable `meta-net-csproj' to access data you need.
+
 Do not modified this buffer, unless you have to.")
 
 (defvar meta-net-csproj (ht-create)
@@ -411,6 +413,8 @@ If argument FORCE is non-nil, clean and rebuild."
           (setq built nil))))
     ;; Find csproj for current buffer file
     (setq meta-net-csproj-current (meta-net--find-current-csproj))
+    (unless meta-net-csproj-current
+      (user-error "Source can't be found, try rebuild solution: %s" (buffer-file-name)))
     ;; Build assembly xml data to cache
     (let ((keys-xml (ht-keys meta-net-xml)) result)
       (dolist (key keys-xml)                                ; key, is xml path

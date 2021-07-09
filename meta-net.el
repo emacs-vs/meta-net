@@ -413,6 +413,14 @@ If argument FORCE is non-nil, clean and rebuild."
     ;; Find csproj for current buffer file
     (setq meta-net-csproj-current (meta-net--find-current-csproj))
     (unless meta-net-csproj-current
+      ;; This mean the current source file is not included inside the any
+      ;; csproj file. This can be following conditions,
+      ;;
+      ;;   1. csproj and solution are not built correctly, try rebuild it
+      ;;      using Visual Studio IDE
+      ;;   2. The source file is not added to csproj file but exists under
+      ;;      the project directory, add the source file to csproj from
+      ;;      Visual Studio IDE or edit csproj your self
       (user-error "Source can't be found, try rebuild solution: %s" (buffer-file-name)))
     ;; Build assembly xml data to cache
     (let ((keys-xml (ht-keys meta-net-xml)) result)

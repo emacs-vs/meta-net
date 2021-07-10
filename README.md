@@ -28,9 +28,15 @@ so you can access the data easily.*
 
 ##### `meta-net-csproj-current`
 
-Buffer local variable, stores the id to access current csproj data. Please use it
-with `meta-net-projects` to access the [solution](https://docs.microsoft.com/en-us/visualstudio/ide/solutions-and-projects-in-visual-studio?view=vs-2019)
-data.
+Buffer local variable that stores the csproj path for current `.cs` source file.
+Use this variable with hash-table `meta-net-csproj` to access csporj data.
+
+The variable can be `nil` if the source file does not exist in any valid C#
+project. Try rebuilds the solution (`.sln`) and C# project files (`.csproj`);
+or add the source file a csproj.
+
+You can add C# source file (`.cs`) by using Visual Studio's (not VSCode);
+right click on csproj then add item.
 
 ##### `(meta-net-define-constants PATH)`
 

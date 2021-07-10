@@ -291,7 +291,7 @@ Argument DOC-NODE is the root from assembly xml file."
                 (returns-node (car (xml-get-children member 'returns)))
                 (returns-desc (nth 2 returns-node))
                 (returns-para (nth 3 returns-node)))
-           (when returns-para (setq returns-desc (nth 2 returns-para)))
+           (when (listp returns-para) (setq returns-desc (nth 2 returns-para)))
            (dolist (param params)
              (setq param-name (xml-get-attribute param 'name)
                    param-desc (nth 2 param))

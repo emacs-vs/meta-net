@@ -159,12 +159,11 @@ and PROJECT."
 See the caller function `meta-net--parse-csproj-xml' for arguments PROJECT-NODE
 and PROJECT."
   (let ((item-groups (xml-get-children project-node 'ItemGroup))
-        refs hint-path attr-include xml)
+        refs hint-path xml)
     (dolist (item-group item-groups)
       (setq refs (xml-get-children item-group 'Reference))
       (dolist (ref refs)
-        (setq attr-include (xml-get-attribute ref 'Include)
-              hint-path (nth 2 (car (xml-get-children ref 'HintPath))))
+        (setq hint-path (nth 2 (car (xml-get-children ref 'HintPath))))
         (unless (file-exists-p hint-path)  ; Convert relative path to absolute path
           (setq hint-path (f-join project hint-path)))
         (setq hint-path (f-swap-ext hint-path "xml"))

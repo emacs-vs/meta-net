@@ -28,7 +28,16 @@
 (require 'ert)
 (require 'debug)
 
-(ert-deftest meta-net-test-parse-xml ()
+(ert-deftest meta-net-test--parse-xml--json-dotnet ()
+  (should (meta-net--parse-csproj-xml "./xml/Newtonsoft.Json.xml")))
+
+(ert-deftest meta-net-test--parse-xml--unity-editor ()
+  (should (meta-net--parse-csproj-xml "./xml/UnityEngine.xml")))
+
+(ert-deftest meta-net-test--parse-xml--unity-engine ()
+  (should (meta-net--parse-csproj-xml "./xml/UnityEngine.xml")))
+
+(ert-deftest meta-net-test--parse-xml--yaml-dotnet ()
   (should (meta-net--parse-csproj-xml "./xml/YamlDotNet.xml")))
 
 (provide 'meta-net-test)

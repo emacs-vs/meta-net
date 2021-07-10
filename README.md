@@ -26,7 +26,7 @@ so you can access the data easily.*
 
 ## :hammer: Basic Usage
 
-##### `meta-net-csproj-current`
+#### `meta-net-csproj-current`
 
 Buffer local variable that stores the csproj path for current `.cs` source file.
 Use this variable with hash-table `meta-net-csproj` to access csporj data.
@@ -38,24 +38,24 @@ or add the source file a csproj.
 You can add C# source file (`.cs`) by using Visual Studio's (not VSCode);
 right click on csproj then add item.
 
-##### `(meta-net-define-constants PATH)`
+#### `(meta-net-define-constants PATH)`
 
 Get a list of define constants from a csproj file. This is useful when you want
 to know what's enable or disable inside preprocessor.
 
-##### `(meta-net-includes PATH)`
+#### `(meta-net-includes PATH)`
 
 Get a list of included source files under a csproj PATH file.
 
-##### `(meta-net-csproj-xmls PATH)`
+#### `(meta-net-csproj-xmls PATH)`
 
 Get a list of assembly xml files under a csproj PATH file.
 
-##### `(meta-net-xml-assemly-name PATH)`
+#### `(meta-net-xml-assemly-name PATH)`
 
 Return the name of the assembly xml file PATH.
 
-##### `(meta-net-xml-data PATH)`
+#### `(meta-net-xml-data PATH)`
 
 Access the xml data from assembly xml file PATH.
 

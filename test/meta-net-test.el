@@ -29,7 +29,7 @@
 (require 'debug)
 
 (ert-deftest meta-net-test-parse-xml ()
-  (should (meta-net--parse-csproj-xml "../xml/YamlDotNet.xml")))
+  (should (meta-net--parse-csproj-xml "./xml/YamlDotNet.xml")))
 
 (provide 'meta-net-test)
 ;;; meta-net-test.el ends here

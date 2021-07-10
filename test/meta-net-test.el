@@ -28,17 +28,31 @@
 (require 'ert)
 (require 'debug)
 
+;;
+;; (@* "CsProj" )
+;;
+
+(ert-deftest meta-net-test--parse-csproj--unity-csharp ()
+  (should (meta-net--parse-csproj-xml "./csproj/Unity/Assembly-CSharp.csproj")))
+
+(ert-deftest meta-net-test--parse-csproj--unity-csharp-editor ()
+  (should (meta-net--parse-csproj-xml "./csproj/Unity/Assembly-CSharp-Editor.csproj")))
+
+;;
+;; (@* "Xml" )
+;;
+
 (ert-deftest meta-net-test--parse-xml--json-dotnet ()
-  (should (meta-net--parse-csproj-xml "./xml/Newtonsoft.Json.xml")))
+  (should (meta-net--parse-assembly-xml "./xml/Newtonsoft.Json.xml")))
 
 (ert-deftest meta-net-test--parse-xml--unity-editor ()
-  (should (meta-net--parse-csproj-xml "./xml/UnityEngine.xml")))
+  (should (meta-net--parse-assembly-xml "./xml/UnityEngine.xml")))
 
 (ert-deftest meta-net-test--parse-xml--unity-engine ()
-  (should (meta-net--parse-csproj-xml "./xml/UnityEngine.xml")))
+  (should (meta-net--parse-assembly-xml "./xml/UnityEngine.xml")))
 
 (ert-deftest meta-net-test--parse-xml--yaml-dotnet ()
-  (should (meta-net--parse-csproj-xml "./xml/YamlDotNet.xml")))
+  (should (meta-net--parse-assembly-xml "./xml/YamlDotNet.xml")))
 
 (provide 'meta-net-test)
 ;;; meta-net-test.el ends here

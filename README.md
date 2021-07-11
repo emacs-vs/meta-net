@@ -9,9 +9,9 @@ perform some features from Visaul Studio IDE (not VSCode). This package only
 provides reading data and built it to user accessible level. Here are some
 packages as examples,
 
-* [hl-preproc](https://github.com/emacs-vs/hl-preproc)
-* [meta-view](https://github.com/emacs-vs/meta-view)
-* [company-meta-net](https://github.com/emacs-vs/company-meta-net)
+* [hl-preproc](https://github.com/emacs-vs/hl-preproc) - Unhighlight invalid preprocessor region
+* [meta-view](https://github.com/emacs-vs/meta-view) - View metadata from .NET assemblies
+* [company-meta-net](https://github.com/emacs-vs/company-meta-net) - company-mode backend for C# project
 
 ## :trophy: Features
 

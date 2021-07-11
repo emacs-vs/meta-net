@@ -4,14 +4,24 @@
 # meta-net
 > Parse C# .NET csproj to usable data
 
+The goal of this project is to easily let user access csproj file data to
+perform some features from Visaul Studio IDE (not VSCode). This package only
+provides reading data and built it to user accessible level.
+
+## :trophy: Features
+
+* *Access includes file* - source files under current project
+* *Access define constants* - define constants (preprocessor)
+* *Access assembly xml files* - access xml files and it's xml data
+
 ## :floppy_disk: Quickstart
 
 ```el
 (require 'ht)
 
-(meta-net-read-project)  ; read and build data in .cs file
+(meta-net-read-project)  ; read and build data, call this in a .cs file
 
-(let* ((project meta-net-csproj-current)
+(let* ((project meta-net-csproj-current)           ; path to csproj file
        (csprojs (meta-net-csproj-files project))   ; List of csproj files under project
        (first-csproj (nth 0 csprojs))              ; Pick the first csproj file
        (xmls (meta-net-csproj-xmls first-csproj))  ; Get all xml files under a csproj

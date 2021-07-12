@@ -11,7 +11,8 @@ packages as examples,
 
 * [hl-preproc](https://github.com/emacs-vs/hl-preproc) - Unhighlight invalid preprocessor region
 * [meta-view](https://github.com/emacs-vs/meta-view) - View metadata from .NET assemblies
-* [company-meta-net](https://github.com/emacs-vs/company-meta-net) - company-mode backend for C# project
+* [company-meta-net](https://github.com/emacs-vs/company-meta-net) - company-mode backend for VS C# project
+* [eldoc-meta-net](https://github.com/emacs-vs/eldoc-meta-net) - Eldoc support for for VS C# project
 
 ## :trophy: Features
 
@@ -49,13 +50,13 @@ Use this variable with hash-table `meta-net-csproj` to access csporj data.
 If this variable is constantly being `nil`, it can cause be one of the following
 reasons:
 
-1. csproj and solution are not built correctly, try rebuild it using Visual
+* csproj and solution are not built correctly, try rebuild it using Visual
 Studio IDE (not VSCode)
-2. The source file is not added to csproj file but exists under the project
+* The source file is not added to csproj file but exists under the project
 directory, add the source file to csproj from Visual Studio IDE or edit csproj
 your self
-3. Not under a valid Visual Studio IDE C# project
-4. The new SDK based csproj no longer needs to include all source (.cs) files.
+* Not under a valid Visual Studio IDE C# project
+* The new SDK based csproj no longer needs to include all source (.cs) files.
 
 #### `(meta-net-define-constants PATH)`
 

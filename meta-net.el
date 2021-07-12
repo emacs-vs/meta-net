@@ -74,12 +74,16 @@ Do not modified this buffer, unless you have to.")
 (defvar meta-net--possible-csproj nil
   "Record a list of possible csporj.
 
-See references Pt. 2 in README file.")
+The new SDK based csproj format on longer needs to `includes` all source (.cs)
+files, hence we need this variable to guess the possible csproj file.
+
+See references Pt 2 in README file for more information.")
 
 (defvar meta-net-csproj (ht-create)
   "Mapping of all csproj file entries.
 
 Store data in (path . hash-table); hash-table are data defined in csproj.
+
 See function `meta-net--parse-csproj-xml' to get more information.")
 
 (defvar meta-net-xml (ht-create)
@@ -362,6 +366,7 @@ P.S. Please call the function under a project."
          (lambda (current)  ; `current` is the path of walking path
            (setq csprojs (f--files current (equal (f-ext it) "csproj")))
            (when csprojs  ; found csproj files in `current' directory
+             (setq meta-net--possible-csproj (append meta-net--possible-csproj csprojs))
              (meta-net-create-entry-csproj csprojs)))
          project)))
     (meta-net-build-data force)))
@@ -416,16 +421,29 @@ If argument FORCE is non-nil, clean and rebuild."
           (setq built nil))))
     ;; Find csproj for current buffer file
     (setq meta-net-csproj-current (meta-net--find-current-csproj))
+    ;; This mean the current source file is not included inside the any
+    ;; csproj file. This can be following conditions,
+    ;;
+    ;;   1. csproj and solution are not built correctly, try rebuild it
+    ;;      using Visual Studio IDE (not VSCode)
+    ;;
+    ;;   2. The source file is not added to csproj file but exists under
+    ;;      the project directory, add the source file to csproj from
+    ;;      Visual Studio IDE or edit csproj your self
+    ;;
+    ;;   3. Not under a valid Visual Studio IDE C# project
+    ;;
+    ;;   4. The new SDK based csproj no longer needs to include all source
+    ;;      (.cs) files.
     (unless meta-net-csproj-current
-      ;; This mean the current source file is not included inside the any
-      ;; csproj file. This can be following conditions,
-      ;;
-      ;;   1. csproj and solution are not built correctly, try rebuild it
-      ;;      using Visual Studio IDE
-      ;;   2. The source file is not added to csproj file but exists under
-      ;;      the project directory, add the source file to csproj from
-      ;;      Visual Studio IDE or edit csproj your self
-      (user-error "Source can't be found, try rebuild solution: %s" (buffer-file-name)))
+      (cond ((null meta-net--possible-csproj)
+             (user-error "No csproj found in parent directory, make sure are under a valid VS C# project"))
+            ;; Automatically pick the first one if that's the only choice
+            ((= 1 (length meta-net--possible-csproj))
+             (setq meta-net-csproj-current (nth 0 meta-net--possible-csproj)))
+            ;; Else, we ask the user for all possible candidates
+            (t (setq meta-net-csproj-current (completing-read "Select csproj: " meta-net--possible-csproj)))))
+    (setq meta-net--possible-csproj nil)  ; you no longer need this, clean it
     ;; Build assembly xml data to cache
     (let ((keys-xml (ht-keys meta-net-xml)) result)
       (dolist (key keys-xml)                                ; key, is xml path

@@ -46,12 +46,16 @@ so you can access the data easily.*
 Buffer local variable that stores the csproj path for current `.cs` source file.
 Use this variable with hash-table `meta-net-csproj` to access csporj data.
 
-The variable can be `nil` if the source file does not exist in any valid C#
-project. Try rebuilds the solution (`.sln`) and C# project files (`.csproj`);
-or add the source file a csproj.
+If this variable is constantly being `nil`, it can cause be one of the following
+reasons:
 
-You can add C# source file (`.cs`) by using Visual Studio's (not VSCode);
-right click on csproj then add item.
+1. csproj and solution are not built correctly, try rebuild it using Visual
+Studio IDE (not VSCode)
+2. The source file is not added to csproj file but exists under the project
+directory, add the source file to csproj from Visual Studio IDE or edit csproj
+your self
+3. Not under a valid Visual Studio IDE C# project
+4. The new SDK based csproj no longer needs to include all source (.cs) files.
 
 #### `(meta-net-define-constants PATH)`
 

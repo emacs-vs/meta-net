@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 
+## 1.2.0 (Unreleased)
+> Released N/A
+
+* Support new SDK based csproj format
+
 ## 1.1.0
 > Released Jul 05, 2021
 

@@ -77,6 +77,7 @@ Access the xml data from assembly xml file PATH.
 ## :link: References
 
 * [The XML Documentation File](https://docs.microsoft.com/en-us/archive/msdn-magazine/2019/october/csharp-accessing-xml-documentation-via-reflection)
+* [.NET Core .csproj missing file path of .cs files in vs studio 2019](https://stackoverflow.com/questions/60541348/net-core-csproj-missing-file-path-of-cs-files-in-vs-studio-2019)
 
 ## Contribution
 

@@ -430,7 +430,7 @@ If argument FORCE is non-nil, clean and rebuild."
           (ht-set meta-net-xml key result)
           (setq built nil))))
     (if built (message "Everything up to date, no need to rebuild")
-      (message "Done rebuild solution for project: `%s`" (meta-net--project-current)))))
+      (message "Done rebuild solution for project: `%s`" meta-net-csproj-current))))
 
 ;;
 ;; (@* "CsProj" )

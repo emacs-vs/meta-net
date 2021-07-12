@@ -71,6 +71,11 @@ Please use this with variable `meta-net-csproj' to access data you need.
 
 Do not modified this buffer, unless you have to.")
 
+(defvar meta-net--possible-csproj nil
+  "Record a list of possible csporj.
+
+See references Pt. 2 in README file.")
+
 (defvar meta-net-csproj (ht-create)
   "Mapping of all csproj file entries.
 

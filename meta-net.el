@@ -356,6 +356,7 @@ If argument FORCE is non-nil, refresh cache and rebuild data cleanly.
 
 P.S. Please call the function under a project."
   (when force (setq meta-net-csproj-current nil))
+  (setq meta-net--possible-csproj nil)
   (if meta-net-csproj-current
       (user-error "Data has been built, pass FORCE with t to rebuild")
     (let ((project (meta-net--project-current)) (path (f-parent (buffer-file-name)))

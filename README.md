@@ -1,8 +1,9 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-![CI](https://github.com/emacs-vs/meta-net/workflows/CI/badge.svg)
 
 # meta-net
 > Parse C# .NET csproj to usable data
+
+![CI](https://github.com/emacs-vs/meta-net/workflows/CI/badge.svg)
 
 The goal of this project is to easily let user access csproj file data to
 perform some features from Visaul Studio IDE (not VSCode). This package only

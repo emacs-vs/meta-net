@@ -86,7 +86,10 @@ Access the xml data from assembly xml file PATH.
 * [The XML Documentation File](https://docs.microsoft.com/en-us/archive/msdn-magazine/2019/october/csharp-accessing-xml-documentation-via-reflection)
 * [.NET Core .csproj missing file path of .cs files in vs studio 2019](https://stackoverflow.com/questions/60541348/net-core-csproj-missing-file-path-of-cs-files-in-vs-studio-2019)
 
-## Contribution
+## Contribute
+
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+[![Elisp styleguide](https://img.shields.io/badge/elisp-style%20guide-purple)](https://github.com/bbatsov/emacs-lisp-style-guide)
 
 If you would like to contribute to this project, you may either
 clone and make pull requests to this repository. Or you can

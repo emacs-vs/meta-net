@@ -1,6 +1,6 @@
 ;;; meta-net.el --- Parse .NET assembly's XML  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2021  Shen, Jen-Chieh
+;; Copyright (C) 2021-2022  Shen, Jen-Chieh
 ;; Created date 2021-06-24 21:17:03
 
 ;; Author: Shen, Jen-Chieh <jcs090218@gmail.com>

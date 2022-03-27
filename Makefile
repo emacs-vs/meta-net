@@ -23,7 +23,7 @@ compile:
 
 test:
 	@echo "Testing..."
-    $(EASK) install --dev
+	$(EASK) install --dev
 	$(EASK) exec ert-runner -L . $(LOAD-TEST-FILES) -t '!no-win' -t '!org'
 
 clean:

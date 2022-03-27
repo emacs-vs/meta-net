@@ -5,11 +5,10 @@
 # ignore generated files
 *.elc
 
-# cask packages
-.cask/
+# eask packages
+.eask/
 dist/
 
-# ignore video
-/video    
-
-.eask
+# packaging
+*-autoloads.el
+*-pkg.el

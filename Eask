@@ -1,7 +1,14 @@
 (source "jcs-elpa")
 (source "melpa")
 
+(package "meta-net" "1.1.0" "Parse .NET assembly's XML")
+
 (package-file "meta-net.el")
+
+(depends-on "emacs" "25.1")
+(depends-on "ht")
+(depends-on "f")
+(depends-on "s")
 
 (development
  (depends-on "ert-runner"))

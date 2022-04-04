@@ -7,7 +7,7 @@ TEST-FILES := $(shell ls test/meta-net-*.el)
 
 .PHONY: clean checkdoc lint package install compile test
 
-ci: clean package install compile
+ci: clean package install compile test
 
 package:
 	@echo "Packaging..."

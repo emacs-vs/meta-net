@@ -1,9 +1,9 @@
-(source "jcs-elpa")
-(source "melpa")
-
 (package "meta-net" "1.1.0" "Parse .NET assembly's XML")
 
 (package-file "meta-net.el")
+
+(source "jcs-elpa")
+(source "melpa")
 
 (depends-on "emacs" "25.1")
 (depends-on "ht")
@@ -13,5 +13,4 @@
 (development
  (depends-on "ert-runner"))
 
-(setq network-security-level 'low      ; see https://github.com/jcs090218/setup-emacs-windows/issues/156#issuecomment-932956432
-      byte-compile-error-on-warn t)
+(setq network-security-level 'low)  ; see https://github.com/jcs090218/setup-emacs-windows/issues/156#issuecomment-932956432

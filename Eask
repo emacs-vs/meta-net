@@ -1,4 +1,6 @@
-(package "meta-net" "1.1.0" "Parse .NET assembly's XML")
+(package "meta-net"
+         "1.1.0"
+         "Parse .NET assembly's XML")
 
 (package-file "meta-net.el")
 

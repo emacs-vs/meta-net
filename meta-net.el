@@ -4,11 +4,10 @@
 ;; Created date 2021-06-24 21:17:03
 
 ;; Author: Shen, Jen-Chieh <jcs090218@gmail.com>
-;; Description: Parse .NET assembly's XML
-;; Keyword: assembly xml utility
+;; URL: https://github.com/emacs-vs/meta-net
 ;; Version: 1.1.0
 ;; Package-Requires: ((emacs "25.1") (ht "2.3") (f "0.20.0") (s "1.12.0"))
-;; URL: https://github.com/emacs-vs/meta-net
+;; Keywords: assembly xml utility
 
 ;; This file is NOT part of GNU Emacs.
 

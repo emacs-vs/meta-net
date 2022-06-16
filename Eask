@@ -2,6 +2,9 @@
          "1.1.0"
          "Parse .NET assembly's XML")
 
+(website-url "https://github.com/emacs-vs/meta-net")
+(keywords "assembly" "xml" "utility")
+
 (package-file "meta-net.el")
 
 (source "jcs-elpa")

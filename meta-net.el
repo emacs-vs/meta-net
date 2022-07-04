@@ -7,7 +7,7 @@
 ;; URL: https://github.com/emacs-vs/meta-net
 ;; Version: 1.1.0
 ;; Package-Requires: ((emacs "25.1") (ht "2.3") (f "0.20.0") (s "1.12.0"))
-;; Keywords: assembly xml utility
+;; Keywords: convenience assembly xml utility
 
 ;; This file is NOT part of GNU Emacs.
 

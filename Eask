@@ -3,7 +3,7 @@
          "Parse .NET assembly's XML")
 
 (website-url "https://github.com/emacs-vs/meta-net")
-(keywords "assembly" "xml" "utility")
+(keywords "convenience" "assembly" "xml" "utility")
 
 (package-file "meta-net.el")
 

@@ -1,3 +1,5 @@
+;; -*- mode: eask; lexical-binding: t -*-
+
 (package "meta-net"
          "1.1.0"
          "Parse .NET assembly's XML")
